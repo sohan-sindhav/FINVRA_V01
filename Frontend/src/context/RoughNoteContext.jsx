@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axiosInstance from "../configs/axiosInstance";
-import { useAuth } from "./authcontext";
+import axiosInstance from "../configs/AxiosInstance";
+import { useAuth } from "./AuthContext";
 
 const RoughNoteContext = createContext();
 

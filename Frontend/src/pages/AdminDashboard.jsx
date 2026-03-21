@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/authcontext";
+import { useAuth } from "../context/AuthContext";
 import { Shield, Clock, ExternalLink, RefreshCw, User, Globe, Laptop, Smartphone, Tablet } from "lucide-react";
 import { motion } from "framer-motion";
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ArrowRight, RotateCcw, ArrowLeft, AlertCircle , History , CheckCircle  } from "lucide-react";
 import { useBankAccounts } from "../context/BankAccContext";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../configs/AxiosInstance";
 import Modal, { ModalFooter, CancelBtn, ConfirmBtn } from "../components/Modal.jsx";
 import { motion } from "framer-motion";
 

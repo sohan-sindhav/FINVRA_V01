@@ -27,7 +27,7 @@ import {
 import { Link } from "react-router-dom";
 import { useTheme } from "../theme/ThemeContext";
 import { motion } from "framer-motion";
-import { useAuth } from "../context/authcontext";
+import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
   const { bankAccounts } = useBankAccounts();

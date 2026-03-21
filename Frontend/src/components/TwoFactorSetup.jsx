@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/authcontext";
+import { useAuth } from "../context/AuthContext";
 import { Shield, ShieldCheck, ShieldAlert, X, Copy, Check } from "lucide-react";
 
 const TwoFactorSetup = () => {

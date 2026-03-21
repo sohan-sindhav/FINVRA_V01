@@ -1,8 +1,5 @@
-import { createContext } from "react";
-import axiosInstance from "../configs/axiosInstance";
-import { useState } from "react";
-import { useContext } from "react";
-import { useEffect } from "react";
+import { createContext, useEffect, useContext, useState } from "react";
+import axiosInstance from "../configs/AxiosInstance";
 
 const TransactionContext = createContext();
 

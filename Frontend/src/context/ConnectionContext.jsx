@@ -1,5 +1,5 @@
 import { createContext, useEffect, useContext, useState } from "react";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../configs/AxiosInstance";
 import axios from "axios";
 
 const ConnectionContext = createContext();

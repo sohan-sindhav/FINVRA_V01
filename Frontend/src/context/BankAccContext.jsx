@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from "react";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../configs/AxiosInstance.js";
 
 export const BankAccContext = createContext();
 

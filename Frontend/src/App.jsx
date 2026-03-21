@@ -1,35 +1,33 @@
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/authcontext";
+import { AuthProvider } from "./context/AuthContext";
 import Register from "./pages/Register.jsx";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
-import ProtectedRoute from "./components/ProtectedRotue";
-import Navbar from "./components/navbar";
-import Profile from "./pages/profile";
-import ConnectionPage from "./pages/connections/ConnectionPage";
-import { useAuth } from "./context/authcontext";
-import Sidebar from "./components/sidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+import Profile from "./pages/Profile";
+import ConnectionPage from "./pages/Connections/ConnectionPage";
+import { useAuth } from "./context/AuthContext";
+import Sidebar from "./components/Sidebar.jsx";
 import BankAccountPage from "./pages/BankAccountPage.jsx";
 import TransactionsPage from "./pages/TransactionsPage.jsx";
 import BankHistoryPage from "./pages/BankHistory.jsx";
 import BankReverseEntriesPage from "./pages/BankReverseEntriesPage.jsx";
 import TransactionReversePage from "./pages/TransactionReversePage.jsx";
-import TransactionFlowChart from "./pages/Transactionflowchart.jsx";
+import TransactionFlowchart from "./pages/TransactionFlowchart.jsx";
 import IPOPage from "./pages/IPOPage.jsx";
 import PanManagerPage from "./pages/PanManagerPage.jsx";
 import RoughNotesPage from "./pages/RoughNotesPage.jsx";
 import RoughNoteDetails from "./pages/RoughNoteDetails.jsx";
 import { useEffect } from "react";
 
-
 const App = () => {
   const location = useLocation();
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
 
-  // Auth pages render standalone — no Navbar, no sidebar, no scroll wrapper
   if (isAuthPage) {
     return (
       <Routes>
@@ -123,7 +121,7 @@ const App = () => {
               path="/transactionsFlow"
               element={
                 <ProtectedRoute>
-                  <TransactionFlowChart />
+                  <TransactionFlowchart />
                 </ProtectedRoute>
               }
             />

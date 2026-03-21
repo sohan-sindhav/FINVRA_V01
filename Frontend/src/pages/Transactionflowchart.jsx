@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 import dagre from "@dagrejs/dagre";
 import "@xyflow/react/dist/style.css";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../configs/AxiosInstance";
 import { useNavigate } from "react-router-dom";
 
 // ─── Layout ──────────────────────────────────────────────────────────────────

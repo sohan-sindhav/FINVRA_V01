@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "../context/authcontext";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { User, Bell, Search, Hexagon } from "lucide-react";
 import ThemeToggle from "./ThemePanel";

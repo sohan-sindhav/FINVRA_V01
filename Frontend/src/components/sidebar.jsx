@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Users, ArrowLeftRight, Landmark, Blocks, CreditCard, NotebookPen, Shield, LayoutDashboard } from "lucide-react";
-import { useAuth } from "../context/authcontext";
+import { useAuth } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { to: "/connections", label: "Connections", icon: Users, id: "connections" },

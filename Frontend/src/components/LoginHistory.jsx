@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../configs/axiosInstance";
+import axiosInstance from "../configs/AxiosInstance";
 import { Monitor, Smartphone, Tablet, Clock, ShieldCheck, ShieldAlert } from "lucide-react";
 
 const LoginHistory = () => {
