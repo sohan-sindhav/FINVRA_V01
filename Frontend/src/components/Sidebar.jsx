@@ -90,11 +90,12 @@ const Sidebar = () => {
 
       {/* ── MOBILE BOTTOM NAV ── */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center overflow-x-auto no-scrollbar"
         style={{
           background: "var(--color-sidebar-bg)",
           borderTop: "1px solid var(--color-border)",
-          padding: "0.5rem 0",
+          padding: "0.5rem 0.25rem",
+          gap: "0.25rem",
         }}
       >
         {visibleLinks.map(({ to, label, icon: Icon }) => {
@@ -103,23 +104,24 @@ const Sidebar = () => {
             <Link
               key={label}
               to={to}
+              className="flex-shrink-0 min-w-[70px]"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 gap: "0.2rem",
-                padding: "0.4rem 1rem",
+                padding: "0.4rem 0.5rem",
                 textDecoration: "none",
                 color: active
                   ? "var(--color-text-base)"
                   : "var(--color-text-muted)",
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 fontWeight: active ? 600 : 400,
                 transition: "color var(--transition-speed)",
               }}
             >
-              <Icon size={20} />
-              <span>{label}</span>
+              <Icon size={18} />
+              <span className="whitespace-nowrap">{label}</span>
             </Link>
           );
         })}
