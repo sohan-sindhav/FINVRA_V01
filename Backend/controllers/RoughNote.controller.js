@@ -36,13 +36,14 @@ export const addEntry = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { personId, type, amount, description, date, category } = req.body;
+    const { personId, type, amount, description, notes, date, category } = req.body;
     
     const entry = await RoughNoteEntry.create([{
       personId,
       type,
       amount,
       description,
+      notes,
       category: category || "Other",
       date: date || Date.now()
     }], { session });

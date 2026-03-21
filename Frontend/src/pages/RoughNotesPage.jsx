@@ -32,6 +32,10 @@ const RoughNotesPage = () => {
   // Quick Action Modal State
   const [quickAction, setQuickAction] = useState({ open: false, person: null, type: "send" });
   const [quickAmount, setQuickAmount] = useState("");
+  const [quickDesc, setQuickDesc] = useState("");
+  const [quickNotes, setQuickNotes] = useState("");
+  const [quickCategory, setQuickCategory] = useState("Other");
+  const [quickDate, setQuickDate] = useState(new Date().toISOString().split("T")[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddPerson = async (e) => {
@@ -45,18 +49,24 @@ const RoughNotesPage = () => {
   };
 
   const handleQuickAction = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!quickAmount || Number(quickAmount) <= 0) return;
     setIsSubmitting(true);
     const res = await addEntry({
       personId: quickAction.person._id,
       type: quickAction.type,
       amount: Number(quickAmount),
-      description: `Quick ${quickAction.type}`,
-      date: new Date().toISOString().split("T")[0]
+      description: quickDesc,
+      notes: quickNotes,
+      category: quickCategory,
+      date: quickDate
     });
     if (res.success) {
       setQuickAmount("");
+      setQuickDesc("");
+      setQuickNotes("");
+      setQuickCategory("Other");
+      setQuickDate(new Date().toISOString().split("T")[0]);
       setQuickAction({ open: false, person: null, type: "send" });
     }
     setIsSubmitting(false);
@@ -227,28 +237,68 @@ const RoughNotesPage = () => {
         open={quickAction.open} 
         onClose={() => !isSubmitting && setQuickAction({ ...quickAction, open: false })} 
         title={`${quickAction.type === 'send' ? 'You gave to ' : 'You received from '} ${quickAction.person?.name}`}
-        maxWidth="max-w-xs"
+        maxWidth="max-w-md"
       >
-         <form onSubmit={handleQuickAction} className="flex flex-col gap-6 mt-4">
-            <ModalField label="Amount (₹)">
+         <form onSubmit={handleQuickAction} className="flex flex-col gap-5 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+               <ModalField label="Amount (₹)">
+                  <input 
+                    type="number" 
+                    value={quickAmount} 
+                    onChange={(e) => setQuickAmount(e.target.value)}
+                    className={`${modalInputCls}`}
+                    placeholder="0.00"
+                    required
+                    autoFocus
+                    min="1"
+                  />
+               </ModalField>
+               <ModalField label="Category">
+                  <select 
+                    value={quickCategory} 
+                    onChange={(e) => setQuickCategory(e.target.value)}
+                    className={modalInputCls}
+                  >
+                     {["Lunch", "Travel", "Lend", "Movie", "Shopping", "Other"].map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+               </ModalField>
+            </div>
+
+            <ModalField label="Reason / Memo (Optional)">
                <input 
-                 type="number" 
-                 value={quickAmount} 
-                 onChange={(e) => setQuickAmount(e.target.value)}
-                 className={`${modalInputCls} text-lg`}
-                 placeholder="0.00"
-                 required
-                 autoFocus
-                 min="1"
+                 type="text" 
+                 value={quickDesc} 
+                 onChange={(e) => setQuickDesc(e.target.value)}
+                 className={`${modalInputCls}`}
+                 placeholder="e.g. Lunch split"
                />
             </ModalField>
+
+            <ModalField label="Additional Notes (Optional)">
+               <textarea 
+                 value={quickNotes} 
+                 onChange={(e) => setQuickNotes(e.target.value)}
+                 className={`${modalInputCls} min-h-[80px] py-3 resize-none`}
+                 placeholder="Any extra details..."
+               />
+            </ModalField>
+
+            <ModalField label="Date of Entry">
+               <input 
+                 type="date" 
+                 value={quickDate} 
+                 onChange={(e) => setQuickDate(e.target.value)}
+                 className={`${modalInputCls}`}
+               />
+            </ModalField>
+
             <ModalFooter>
                <CancelBtn onClick={() => setQuickAction({ ...quickAction, open: false })} disabled={isSubmitting} />
                <ConfirmBtn 
-                 variant={quickAction.type === 'send' ? 'primary' : 'danger'} 
+                 className={quickAction.type === 'send' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600'} 
                  disabled={isSubmitting}
                >
-                 {isSubmitting ? <Loader2 size={16} className="animate-spin inline" /> : 'Confirm'}
+                 {isSubmitting ? <Loader2 size={16} className="animate-spin inline" /> : 'Confirm Entry'}
                </ConfirmBtn>
             </ModalFooter>
          </form>

@@ -34,6 +34,7 @@ const RoughNoteDetails = () => {
   const [entryType, setEntryType] = useState("send");
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
+  const [entryNotes, setEntryNotes] = useState("");
   const [category, setCategory] = useState("Other");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,12 +78,14 @@ const RoughNoteDetails = () => {
       type: entryType,
       amount: Number(amount),
       description: desc,
+      notes: entryNotes,
       category,
       date
     });
     if (res.success) {
       setAmount("");
       setDesc("");
+      setEntryNotes("");
       setCategory("Other");
       setShowAdd(false);
       fetchData();
@@ -154,7 +157,7 @@ const RoughNoteDetails = () => {
   );
 
   return (
-    <div className="min-h-full bg-[var(--color-bg-page)] text-[var(--color-text-base)] font-exo overflow-y-auto">
+    <div className="min-h-full bg-[var(--color-bg-page)] text-[var(--color-text-base)] font-exo overflow-y-auto pb-20">
       {/* ── TOP NAV HEADER ── */}
       <div className="sticky top-0 z-20 bg-[var(--color-bg-page)]/80 backdrop-blur-xl border-b border-[var(--color-border)] p-4 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4 md:gap-6">
@@ -210,38 +213,9 @@ const RoughNoteDetails = () => {
         </div>
       </div>
 
-      <div className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-         {/* ── LEFT: PRIVATE SCRATCHPAD ── */}
-         <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
-            <div className="p-6 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)] shadow-sm flex flex-col gap-4">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[var(--color-text-base)]">
-                     <StickyNote size={18} className="text-amber-500" />
-                     <h3 className="text-sm font-semibold">Private Scratchpad</h3>
-                  </div>
-                  {saveStatus !== 'idle' && (
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500">
-                       {saveStatus === 'saving' ? 'Saving...' : <><Check size={12} /> Saved</>}
-                    </div>
-                  )}
-               </div>
-
-               <textarea 
-                 value={personNotes}
-                 onChange={(e) => setPersonNotes(e.target.value)}
-                 onBlur={handleSaveNotes}
-                 placeholder="Jot down informal notes, agreements, or reminders here..."
-                 className="w-full h-48 md:h-64 bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-xl p-4 text-sm text-[var(--color-text-base)] focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-all resize-none leading-relaxed placeholder:text-[var(--color-text-faint)]"
-               />
-               
-               <p className="text-xs text-[var(--color-text-faint)] text-center italic">
-                  Notes are private to this diary entry.
-               </p>
-            </div>
-         </div>
-
-         {/* ── RIGHT: LEDGER TABLE ── */}
-         <div className="lg:col-span-8 xl:col-span-9 flex flex-col gap-6">
+      <div className="p-4 md:p-8 flex flex-col gap-10">
+         {/* ── TOP: LEDGER HISTORY ── */}
+         <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2 mb-2 p-6 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-sm">
                <History size={18} className="text-indigo-500" />
                <h3 className="text-base font-semibold text-[var(--color-text-base)]">Ledger History <span className="text-[var(--color-text-muted)] font-normal text-sm ml-2">({history.length} entries)</span></h3>
@@ -249,11 +223,11 @@ const RoughNoteDetails = () => {
 
             <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-sm overflow-hidden">
                {/* Table Header */}
-               <div className="grid grid-cols-12 gap-4 border-b border-[var(--color-border)] p-4 px-6 text-xs font-semibold text-[var(--color-text-muted)] bg-[var(--color-bg-elevated)] hidden md:grid">
-                  <div className="col-span-2">Time</div>
-                  <div className="col-span-4">You Sent</div>
-                  <div className="col-span-4">You Received</div>
-                  <div className="col-span-2 text-right text-transparent">Act</div>
+               <div className="grid grid-cols-12 gap-0 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] hidden md:grid">
+                  <div className="col-span-2 p-4 text-center text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider uppercase">Time</div>
+                  <div className="col-span-4 p-4 text-center text-[10px] font-bold text-[var(--color-text-muted)] border-x border-[var(--color-border)] uppercase tracking-wider uppercase">You Received</div>
+                  <div className="col-span-4 p-4 text-center text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider uppercase border-r border-[var(--color-border)]">You Sent</div>
+                  <div className="col-span-2 p-4 text-center text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider uppercase">Action</div>
                </div>
 
                {loading ? (
@@ -284,53 +258,59 @@ const RoughNoteDetails = () => {
                              transition={{ delay: groupIdx * 0.05 }}
                              className="flex flex-col"
                            >
-                              <div className="px-6 py-3 bg-[var(--color-bg-elevated)] border-y border-[var(--color-border)] first:border-t-0 flex items-center gap-3">
-                                 <Calendar size={14} className="text-indigo-500" />
-                                 <span className="text-xs font-semibold text-[var(--color-text-base)]">{formatDate(dateKey)}</span>
+                              <div className="px-6 py-3 bg-[var(--color-bg-elevated)]/50 border-y border-[var(--color-border)] first:border-t-0 flex items-center gap-3">
+                                 <Calendar size={13} className="text-indigo-500" />
+                                 <span className="text-xs font-bold text-[var(--color-text-base)] tracking-wide">{formatDate(dateKey)}</span>
                               </div>
 
                               <div className="flex flex-col divide-y divide-[var(--color-border)]">
                                  {items.map((item) => (
-                                    <div key={item._id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 px-6 hover:bg-[var(--color-bg-page)] transition-colors group">
-                                       <div className="md:col-span-2 flex items-center justify-between md:block">
-                                          <span className="text-xs font-medium text-[var(--color-text-muted)]">
+                                    <div key={item._id} className="grid grid-cols-1 md:grid-cols-12 gap-0 items-center hover:bg-[var(--color-bg-page)] transition-colors group">
+                                       <div className="md:col-span-2 p-4 flex flex-col items-center justify-center text-center">
+                                          <span className="text-[11px] font-semibold text-[var(--color-text-base)]">
                                              {new Date(item.date).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
                                           </span>
-                                          <div className="md:hidden flex gap-2">
-                                             <button onClick={() => handleDeleteEntry(item._id)} className="p-1.5 rounded-lg text-rose-500 bg-rose-500/10"><Trash2 size={14} /></button>
+                                          <div className="md:hidden mt-2 p-2 rounded-lg bg-rose-500/10 text-rose-500" onClick={() => handleDeleteEntry(item._id)}>
+                                             <Trash2 size={14} />
                                           </div>
                                        </div>
                                        
-                                       {/* SEND COLUMN */}
-                                       <div className="md:col-span-4 flex items-center">
-                                          {item.type === 'send' && (
-                                             <div className="flex flex-col w-full">
-                                                <div className="flex justify-between items-start w-full">
-                                                   <span className="text-sm font-semibold text-[var(--color-text-base)] truncate pr-4">{item.description || "Sent"}</span>
-                                                   <span className="text-base font-bold text-emerald-500 whitespace-nowrap">₹{item.amount.toLocaleString("en-IN")}</span>
-                                                </div>
-                                                <span className="text-[10px] font-medium text-indigo-500 mt-1 px-2 py-0.5 bg-indigo-500/10 rounded max-w-fit">{item.category}</span>
-                                             </div>
-                                          )}
-                                       </div>
-
-                                       {/* RECEIVE COLUMN */}
-                                       <div className="md:col-span-4 flex items-center">
+                                       {/* RECEIVED COLUMN */}
+                                       <div className="md:col-span-4 p-4 px-6 flex flex-col items-center justify-center border-x border-[var(--color-border)] min-h-[90px] text-center">
                                           {item.type === 'receive' && (
-                                             <div className="flex flex-col w-full">
-                                                <div className="flex justify-between items-start w-full">
-                                                   <span className="text-sm font-semibold text-[var(--color-text-base)] truncate pr-4">{item.description || "Received"}</span>
-                                                   <span className="text-base font-bold text-rose-500 whitespace-nowrap">₹{item.amount.toLocaleString("en-IN")}</span>
+                                             <div className="flex flex-col items-center w-full">
+                                                <span className="text-[11px] font-medium text-[var(--color-text-muted)] mb-1">{item.description || "Received"}</span>
+                                                <span className="text-lg font-bold text-rose-500">₹{item.amount.toLocaleString("en-IN")}</span>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                   <span className="text-[9px] font-bold text-rose-500 px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">{item.category}</span>
+                                                   {item.notes && (
+                                                      <span className="text-[9px] text-[var(--color-text-faint)] italic max-w-[120px] truncate" title={item.notes}>笔记</span>
+                                                   )}
                                                 </div>
-                                                <span className="text-[10px] font-medium text-indigo-500 mt-1 px-2 py-0.5 bg-indigo-500/10 rounded max-w-fit">{item.category}</span>
                                              </div>
                                           )}
                                        </div>
 
-                                       <div className="col-span-2 hidden md:flex justify-end">
+                                       {/* SENT COLUMN */}
+                                       <div className="md:col-span-4 p-4 px-6 flex flex-col items-center justify-center min-h-[90px] text-center border-r border-[var(--color-border)]">
+                                          {item.type === 'send' && (
+                                             <div className="flex flex-col items-center w-full">
+                                                <span className="text-[11px] font-medium text-[var(--color-text-muted)] mb-1">{item.description || "Sent"}</span>
+                                                <span className="text-lg font-bold text-emerald-500">₹{item.amount.toLocaleString("en-IN")}</span>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                   <span className="text-[9px] font-bold text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">{item.category}</span>
+                                                   {item.notes && (
+                                                      <span className="text-[9px] text-[var(--color-text-faint)] italic max-w-[120px] truncate" title={item.notes}>笔记</span>
+                                                   )}
+                                                </div>
+                                             </div>
+                                          )}
+                                       </div>
+
+                                       <div className="md:col-span-2 p-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                           <button 
                                             onClick={() => handleDeleteEntry(item._id)}
-                                            className="p-2 rounded-lg text-[var(--color-text-faint)] hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+                                            className="p-2.5 rounded-full text-[var(--color-text-faint)] hover:text-rose-500 hover:bg-rose-500/10"
                                           >
                                              <Trash2 size={16} />
                                           </button>
@@ -343,6 +323,35 @@ const RoughNoteDetails = () => {
                      })()}
                   </div>
                )}
+            </div>
+         </div>
+
+         {/* ── BOTTOM: PRIVATE SCRATCHPAD ── */}
+         <div className="flex flex-col gap-6">
+            <div className="p-6 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)] shadow-sm flex flex-col gap-4">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[var(--color-text-base)]">
+                     <StickyNote size={18} className="text-amber-500" />
+                     <h3 className="text-base font-semibold">Private Scratchpad</h3>
+                  </div>
+                  {saveStatus !== 'idle' && (
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500">
+                       {saveStatus === 'saving' ? 'Saving...' : <><Check size={12} /> Saved</>}
+                    </div>
+                  )}
+               </div>
+
+               <textarea 
+                 value={personNotes}
+                 onChange={(e) => setPersonNotes(e.target.value)}
+                 onBlur={handleSaveNotes}
+                 placeholder="Jot down informal notes, agreements, or reminders here..."
+                 className="w-full h-48 bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-xl p-6 text-base text-[var(--color-text-base)] focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-all resize-none leading-relaxed placeholder:text-[var(--color-text-faint)]"
+               />
+               
+               <p className="text-xs text-[var(--color-text-faint)] text-center italic">
+                  Notes are private to this diary entry. Reminders and informal agreements can go here.
+               </p>
             </div>
          </div>
       </div>
@@ -403,7 +412,16 @@ const RoughNoteDetails = () => {
                   />
                </ModalField>
 
-               <ModalField label="Date">
+               <ModalField label="Additional Notes (Optional)">
+                  <textarea 
+                    value={entryNotes} 
+                    onChange={(e) => setEntryNotes(e.target.value)} 
+                    placeholder="Any extra details..."
+                    className={`${modalInputCls} min-h-[80px] py-3 resize-none`}
+                  />
+               </ModalField>
+
+               <ModalField label="Date of Entry">
                   <input 
                     type="date" 
                     value={date} 
@@ -428,7 +446,13 @@ const RoughNoteDetails = () => {
 
             <ModalFooter>
                <CancelBtn onClick={() => setShowAdd(false)} disabled={isSubmitting} />
-               <ConfirmBtn type="submit" disabled={isSubmitting}>Confirm Entry</ConfirmBtn>
+               <ConfirmBtn 
+                 type="submit" 
+                 disabled={isSubmitting} 
+                 className={entryType === 'send' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-rose-500 hover:bg-rose-600 text-white'}
+               >
+                 Confirm Entry
+               </ConfirmBtn>
             </ModalFooter>
          </form>
       </Modal>

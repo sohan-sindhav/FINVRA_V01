@@ -83,13 +83,13 @@ export const ModalFooter = ({ children }) => (
 );
 
 /* ── Cancel button ─────────────────────────────────────────────────────── */
-export const CancelBtn = ({ onClick, disabled, children = "Cancel" }) => (
+export const CancelBtn = ({ onClick, disabled, className = "", children = "Cancel" }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="px-4 py-2 text-sm font-semibold rounded-full border border-gray-700 text-gray-300
-               hover:bg-[#2a2a2a] transition-colors duration-200 disabled:opacity-50"
+    className={`px-4 py-2 text-sm font-semibold rounded-full border border-gray-700 text-gray-300
+               hover:bg-[#2a2a2a] transition-colors duration-200 disabled:opacity-50 ${className}`}
   >
     {children}
   </button>
@@ -101,6 +101,7 @@ export const ConfirmBtn = ({
   disabled,
   loading,
   variant = "white", // "white" | "danger" | "warning" | "success"
+  className = "",
   ...props
 }) => {
   const colors = {
@@ -114,7 +115,7 @@ export const ConfirmBtn = ({
       disabled={disabled || loading}
       className={`px-4 py-2 text-sm font-semibold rounded-full flex items-center gap-2
                   transition-colors duration-200 disabled:opacity-55
-                  ${colors[variant] || colors.white}`}
+                  ${colors[variant] || ""} ${className || colors.white}`}
       {...props}
     >
       {loading ? (

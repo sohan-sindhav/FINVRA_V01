@@ -14,6 +14,12 @@ import panCardRoutes from "./routes/panCard.routes.js";
 import ipoApplicationRoutes from "./routes/IPOApplication.routes.js";
 import roughNoteRoutes from "./routes/RoughNote.routes.js";
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://finvra-v01.vercel.app",
+  "https://finvra.sohan.codes"
+];
+
 import { globalLimiter } from "./middleware/rateLimiter.js";
 
 const app = express();
@@ -25,9 +31,15 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-  }),
+  })
 );
 
 //Making Database connection

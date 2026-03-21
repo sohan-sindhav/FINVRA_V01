@@ -22,6 +22,12 @@ const RoughNoteEntrySchema = new mongoose.Schema({
     set: (v) => (v ? encrypt(v) : ""),
     get: (v) => (v ? decrypt(v) : ""),
   },
+  notes: {
+    type: String,
+    default: "",
+    set: (v) => (v ? encrypt(v) : ""),
+    get: (v) => (v ? decrypt(v) : ""),
+  },
   category: {
     type: String,
     enum: ["Lunch", "Travel", "Lend", "Movie", "Shopping", "Other"],
