@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* DARK MODE (Default) */
+    --color-bg-page: #080808;
+    --color-bg-surface: #121212;
+    --color-bg-card: #181818;
+    --color-bg-elevated: #242424;
+    --color-text-base: #ffffff;
+    --color-text-muted: #888888;
+    --color-text-faint: #444444;
+    --color-border: #222222;
+    --color-border-strong: #333333;
+    --color-sidebar-bg: #080808;
+    --color-navbar-bg: #080808;
+    --shadow-card: 0 4px 20px 0 rgba(0,0,0,0.5);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    
+    --radius-button: 0px;
+    --radius-card: 0px;
+    --radius-modal: 0px;
+    --radius-input: 0px;
+    --sidebar-width: 14rem;
+    --navbar-height: 56px;
+    --transition-speed: 150ms;
+    font-family: "Exo 2", sans-serif;
+  }
+
+  :root.light {
+    /* LIGHT MODE */
+    --color-bg-page: #fcfcfc;
+    --color-bg-surface: #f5f5f5;
+    --color-bg-card: #ffffff;
+    --color-bg-elevated: #eeeeee;
+    --color-text-base: #111111;
+    --color-text-muted: #666666;
+    --color-text-faint: #bbbbbb;
+    --color-border: #eeeeee;
+    --color-border-strong: #dddddd;
+    --color-sidebar-bg: #fcfcfc;
+    --color-navbar-bg: #fcfcfc;
+    --shadow-card: 0 2px 10px 0 rgba(0,0,0,0.05);
+    --glass-bg: rgba(0, 0, 0, 0.02);
+  }
+
+  html, body {
+    height: 100%;
+    background-color: var(--color-bg-page);
+    color: var(--color-text-base);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+  }
+
+  /* Thin custom scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+  *::-webkit-scrollbar { width: 4px; height: 4px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 0;
+  }
+
+  option {
+    background: var(--color-bg-card);
+    color: var(--color-text-base);
+  }
+}
+
+@layer components {
+  /* Minimal Boxy Utilities - Theme aware */
+  .glass-card {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--color-border);
+    backdrop-filter: blur(12px);
+  }
+  .glass-card-hover {
+    @apply transition-colors duration-200;
+  }
+  .glass-card-hover:hover {
+    border-color: var(--color-border-strong);
+  }
+}
