@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/authcontext";
 import Register from "./pages/Register.jsx";
 import Login from "./pages/Login";
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRotue";
 import Navbar from "./components/navbar";
