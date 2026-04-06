@@ -56,12 +56,17 @@ const Dashboard = () => {
     isIPOEnabled ? applications.reduce((sum, app) => sum + (app.amount || 0), 0) : 0, 
   [applications, isIPOEnabled]);
 
-  const totalRoughBalance = useMemo(() => 
-    isMoneyDiaryEnabled ? persons.reduce((sum, p) => sum + (p.totalBalance || 0), 0) : 0, 
+  const moneyDiaryOwedToYou = useMemo(() => 
+    isMoneyDiaryEnabled ? persons.reduce((sum, p) => sum + (p.balance > 0 ? p.balance : 0), 0) : 0, 
   [persons, isMoneyDiaryEnabled]);
 
-  const totalNetWealth = 
-    totalBankBalance + totalBlockedCapital + totalRoughBalance;
+  const moneyDiaryYouOwe = useMemo(() => 
+    isMoneyDiaryEnabled ? persons.reduce((sum, p) => sum + (p.balance < 0 ? Math.abs(p.balance) : 0), 0) : 0, 
+  [persons, isMoneyDiaryEnabled]);
+
+  const totalAssets = totalBankBalance + totalBlockedCapital + moneyDiaryOwedToYou;
+  const totalLiabilities = moneyDiaryYouOwe;
+  const totalNetWealth = totalAssets - totalLiabilities;
 
   const totalIPOProfit = useMemo(() => 
     isIPOEnabled ? applications.reduce((sum, app) => sum + (app.profit || 0), 0) : 0, 
@@ -111,13 +116,25 @@ const Dashboard = () => {
         {/* Net Wealth Card */}
         <div className="sm:col-span-2 bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-xl shadow-md text-white">
            <div className="flex justify-between items-start mb-4">
-              <p className="text-sm font-medium text-white/80">Net Worth</p>
+              <p className="text-sm font-medium text-white/80">Final Net Worth</p>
               <div className="p-2 bg-white/20 rounded-lg">
                  <TrendingUp size={16} />
               </div>
            </div>
-           <h2 className="text-3xl font-bold mb-1 drop-shadow-sm">₹{totalNetWealth.toLocaleString("en-IN")}</h2>
-           <div className="flex items-center gap-2 text-[10px] font-medium text-emerald-300 mt-2">
+           <h2 className="text-3xl font-bold mb-4 drop-shadow-sm">₹{totalNetWealth.toLocaleString("en-IN")}</h2>
+           
+           <div className="flex flex-col gap-1 border-t border-white/20 pt-3">
+              <div className="flex justify-between text-xs font-medium">
+                  <span className="text-white/80">Gross Assets (Bank + IPO + Owed to you)</span>
+                  <span className="text-emerald-300">+ ₹{totalAssets.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between text-xs font-medium">
+                  <span className="text-white/80">Liabilities (Money you owe)</span>
+                  <span className="text-rose-300">- ₹{totalLiabilities.toLocaleString("en-IN")}</span>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-2 text-[10px] font-medium text-emerald-300 mt-4">
                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                Real-time Valuation Active
            </div>
@@ -343,11 +360,11 @@ const Dashboard = () => {
                           <ChevronRight size={14} className="text-[var(--color-text-faint)] group-hover:text-indigo-500 transition-colors" />
                        </div>
                        <div className="flex flex-col">
-                          <span className={`text-lg font-bold ${p.totalBalance < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                             ₹{Math.abs(p.totalBalance).toLocaleString("en-IN")}
+                          <span className={`text-lg font-bold ${p.balance < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                             ₹{Math.abs(p.balance || 0).toLocaleString("en-IN")}
                           </span>
                           <span className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                             {p.totalBalance < 0 ? 'You owe them' : 'They owe you'}
+                             {p.balance < 0 ? 'You owe them' : 'They owe you'}
                           </span>
                        </div>
                     </Link>
