@@ -1,7 +1,11 @@
 import BankAcc from "../models/bankAcc.models.js";
 
+// Helper: compute the effective minimum balance for an account
+const getFloor = (account) =>
+  account.isZeroBalance ? 0 : (account.minimumBalance || 0);
+
 export const createBankAcc = async (req, res) => {
-  const { nickname, bank, accnumber, balance } = req.body;
+  const { nickname, bank, accnumber, balance, isZeroBalance, minimumBalance } = req.body;
   const userId = req.user._id;
 
   const isExist = await BankAcc.findOne({
@@ -15,12 +19,17 @@ export const createBankAcc = async (req, res) => {
       .json({ message: "bank account with nickname exist." });
   } else {
     try {
+      const zeroBalance = isZeroBalance !== false; // default true
+      const minBal = zeroBalance ? 0 : (Number(minimumBalance) || 0);
+
       const bankacc = new BankAcc({
         nickname,
         bank,
         accnumber,
         userId,
-        balance,
+        balance: Number(balance) || 0,
+        isZeroBalance: zeroBalance,
+        minimumBalance: minBal,
       });
       await bankacc.save();
       return res
@@ -100,10 +109,16 @@ export const updateBalance = async (req, res) => {
       return res.status(404).json({ message: "Bank account not found" });
     }
 
-    // Prevent balance going below zero
-    if (account.balance + balance < 0) {
+    const floor = getFloor(account);
+    const newBalance = account.balance + balance;
+
+    // Prevent balance dropping below the minimum floor
+    if (newBalance < floor) {
+      const floorLabel = floor === 0
+        ? "zero"
+        : `₹${floor.toLocaleString("en-IN")}`;
       return res.status(400).json({
-        message: `Not enough balance in "${account.nickname}". Available: ₹${account.balance.toLocaleString("en-IN")}`,
+        message: `Balance cannot go below the minimum balance (${floorLabel}) for "${account.nickname}". Available: ₹${(account.balance - floor).toLocaleString("en-IN")}`,
       });
     }
 
@@ -122,30 +137,36 @@ export const updateBalance = async (req, res) => {
 export const sendMoney = async (req, res) => {
   try {
     const { fromId } = req.params;
-    const { toId, amount } = req.body; // amount was missing
+    const { toId, amount } = req.body;
 
     const fromBankAcc = await BankAcc.findById(fromId);
 
     if (!fromBankAcc) {
       return res.status(404).json({ message: "Source account not found" });
     }
-    if (fromBankAcc.balance < amount) {
+
+    const floor = getFloor(fromBankAcc);
+
+    if (fromBankAcc.balance - amount < floor) {
+      const floorLabel = floor === 0
+        ? "zero"
+        : `₹${floor.toLocaleString("en-IN")}`;
       return res.status(400).json({
-        message: `Not enough balance in "${fromBankAcc.nickname}". Available: ₹${fromBankAcc.balance.toLocaleString("en-IN")}`,
+        message: `Not enough balance in "${fromBankAcc.nickname}". Minimum balance must stay at ${floorLabel}. Available to send: ₹${Math.max(0, fromBankAcc.balance - floor).toLocaleString("en-IN")}`,
       });
     }
 
     // decrease from account
     await BankAcc.findByIdAndUpdate(
-      fromId, // was `id` (undefined)
-      { $inc: { balance: -amount } }, // was `-balance` (undefined)
+      fromId,
+      { $inc: { balance: -amount } },
       { new: true },
     );
 
     // increase to account
     await BankAcc.findByIdAndUpdate(
-      toId, // was `id` (undefined)
-      { $inc: { balance: amount } }, // was `balance` (undefined)
+      toId,
+      { $inc: { balance: amount } },
       { new: true },
     );
 

@@ -27,6 +27,7 @@ const TransactionsPage = () => {
   const [amount,       setAmount]      = useState("");
   const [actionError,  setActionError] = useState("");
   const [searchQuery,  setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLight = theme === "light";
 
@@ -34,19 +35,31 @@ const TransactionsPage = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    await createTransaction({ from, to, amount });
-    await updateBalance({ balance: Number(amount) }, to);
-    await getBankAcc();
-    setFrom(""); setTo(""); setAmount("");
-    setShowModal(false);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createTransaction({ from, to, amount });
+      await updateBalance({ balance: Number(amount) }, to);
+      await getBankAcc();
+      setFrom(""); setTo(""); setAmount("");
+      setShowModal(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReverse = async (t) => {
+    if (isSubmitting) return;
     setActionError("");
-    const result = await updateBalance({ balance: -Number(t.amount) }, t.to?._id);
-    if (!result.success) { setActionError(result.error); return; }
-    await reverseTransaction(t._id);
-    await getBankAcc();
+    setIsSubmitting(true);
+    try {
+      const result = await updateBalance({ balance: -Number(t.amount) }, t.to?._id);
+      if (!result.success) { setActionError(result.error); return; }
+      await reverseTransaction(t._id);
+      await getBankAcc();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const active   = transactions.filter((t) => !t.reversed);
@@ -238,8 +251,10 @@ const TransactionsPage = () => {
               placeholder="0.00" className={modalInputCls} required />
           </ModalField>
           <ModalFooter>
-            <CancelBtn onClick={() => setShowModal(false)} />
-            <ConfirmBtn type="submit">Finalize</ConfirmBtn>
+            <CancelBtn onClick={() => setShowModal(false)} disabled={isSubmitting} />
+            <ConfirmBtn type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Processing..." : "Finalize"}
+            </ConfirmBtn>
           </ModalFooter>
         </form>
       </Modal>

@@ -17,6 +17,18 @@ const BankAccSchema = new mongoose.Schema({
   },
   balance: {
     type: Number,
+    default: 0,
+  },
+  // true  → zero-balance account (floor = 0)
+  // false → account has a minimum balance requirement
+  isZeroBalance: {
+    type: Boolean,
+    default: true,
+  },
+  // Effective floor. Ignored when isZeroBalance is true (floor is 0).
+  minimumBalance: {
+    type: Number,
+    default: 0,
   },
   blockedBalance: {
     type: Number,

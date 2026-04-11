@@ -21,6 +21,7 @@ const PanManagerPage = () => {
   const { theme } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     panNumber: "",
@@ -32,21 +33,26 @@ const PanManagerPage = () => {
 
   const handleAddPan = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError(null);
     
-    // Simple validation
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     if (!panRegex.test(formData.panNumber.toUpperCase())) {
       setError("Please enter a valid PAN number (e.g., ABCDE1234F)");
       return;
     }
 
-    const result = await addPanCard(formData);
-    if (result.success) {
-      setIsModalOpen(false);
-      setFormData({ panNumber: "", nameOnPan: "" });
-    } else {
-      setError(result.message);
+    setIsSubmitting(true);
+    try {
+      const result = await addPanCard(formData);
+      if (result.success) {
+        setIsModalOpen(false);
+        setFormData({ panNumber: "", nameOnPan: "" });
+      } else {
+        setError(result.message);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -197,16 +203,18 @@ const PanManagerPage = () => {
           <div className="flex gap-3 mt-2">
             <button 
               type="button" 
-              className="flex-1 py-2.5 text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] rounded-xl hover:bg-[var(--color-bg-card)] transition-all"
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] rounded-xl hover:bg-[var(--color-bg-card)] transition-all disabled:opacity-50"
               onClick={() => setIsModalOpen(false)}
             >
               Cancel
             </button>
             <button 
-              type="submit" 
-              className="flex-1 py-2.5 text-xs font-medium bg-indigo-500 text-white rounded-xl shadow-sm hover:bg-indigo-600 transition-all"
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 text-xs font-medium bg-indigo-500 text-white rounded-xl shadow-sm hover:bg-indigo-600 transition-all disabled:opacity-60"
             >
-              Add Card
+              {isSubmitting ? "Adding..." : "Add Card"}
             </button>
           </div>
         </form>

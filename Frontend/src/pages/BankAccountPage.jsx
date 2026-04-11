@@ -37,6 +37,10 @@ const BankAccountPage = () => {
   const [bank,          setBank]          = useState("");
   const [accnumber,     setAccnumber]     = useState("");
   const [balance,       setBalance]       = useState(0);
+  // New: zero-balance account toggle & minimum balance
+  const [isZeroBalance,   setIsZeroBalance]   = useState(true);
+  const [minimumBalance,  setMinimumBalance]  = useState("");
+
   const [selectedAcc,   setSelectedAcc]   = useState(null);
   const [newBalance,    setNewBalance]     = useState("");
   const [balanceError,  setBalanceError]  = useState("");
@@ -46,25 +50,50 @@ const BankAccountPage = () => {
   const [sendAmount,    setSendAmount]    = useState("");
   const [sendError,     setSendError]     = useState("");
   const [searchQuery,   setSearchQuery]   = useState("");
+  const [isSubmitting,  setIsSubmitting]  = useState(false);
 
   const isLight = theme === "light";
 
   useEffect(() => { getBankAcc(); }, []);
 
+  const resetCreateForm = () => {
+    setNickname(""); setBank(""); setAccnumber(""); setBalance(0);
+    setIsZeroBalance(true); setMinimumBalance("");
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
-    await createBankAcc({ nickname, bank, accnumber, balance });
-    setNickname(""); setBank(""); setAccnumber(""); setBalance("");
-    setShowModal(false);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createBankAcc({
+        nickname,
+        bank,
+        accnumber,
+        balance,
+        isZeroBalance,
+        minimumBalance: isZeroBalance ? 0 : Number(minimumBalance) || 0,
+      });
+      resetCreateForm();
+      setShowModal(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdateBalance = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setBalanceError("");
-    const result = await updateBalance({ balance: Number(newBalance) }, selectedAcc._id);
-    if (!result.success) { setBalanceError(result.error); return; }
-    await getBankAcc();
-    setNewBalance(""); setSelectedAcc(null);
+    setIsSubmitting(true);
+    try {
+      const result = await updateBalance({ balance: Number(newBalance) }, selectedAcc._id);
+      if (!result.success) { setBalanceError(result.error); return; }
+      await getBankAcc();
+      setNewBalance(""); setSelectedAcc(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetBalance = async () => {
@@ -77,12 +106,18 @@ const BankAccountPage = () => {
 
   const handleSendMoney = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setSendError("");
-    const result = await sendMoney(sendFromAcc._id, { toId: sendToId, amount: Number(sendAmount) });
-    if (!result.success) { setSendError(result.error); return; }
-    await getBankAcc();
-    setToId(""); setAmount("");
-    setShowSendModal(false); setSendFromAcc(null);
+    setIsSubmitting(true);
+    try {
+      const result = await sendMoney(sendFromAcc._id, { toId: sendToId, amount: Number(sendAmount) });
+      if (!result.success) { setSendError(result.error); return; }
+      await getBankAcc();
+      setSendToId(""); setSendAmount("");
+      setShowSendModal(false); setSendFromAcc(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredAccounts = bankAccounts.filter(acc => 
@@ -136,6 +171,7 @@ const BankAccountPage = () => {
                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-12">#</th>
                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Account</th>
                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Bank</th>
+                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Min. Balance</th>
                  <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Balance</th>
                  <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-32">Actions</th>
               </tr>
@@ -143,11 +179,11 @@ const BankAccountPage = () => {
            <tbody className="divide-y divide-[var(--color-border)]">
               {loading && sortedAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-20 text-center text-xs text-[var(--color-text-faint)]">Loading records...</td>
+                  <td colSpan="6" className="py-20 text-center text-xs text-[var(--color-text-faint)]">Loading records...</td>
                 </tr>
               ) : sortedAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-20 text-center text-xs text-[var(--color-text-faint)]">No accounts found.</td>
+                  <td colSpan="6" className="py-20 text-center text-xs text-[var(--color-text-faint)]">No accounts found.</td>
                 </tr>
               ) : (
                 sortedAccounts.map((acc, i) => (
@@ -156,8 +192,17 @@ const BankAccountPage = () => {
                     <td className="px-6 py-4">
                        <span className="text-sm font-medium text-[var(--color-text-base)]">{acc.nickname}</span>
                        {acc.accnumber && <span className="block text-[10px] text-[var(--color-text-faint)] font-mono mt-0.5 opacity-60">****{String(acc.accnumber).slice(-4)}</span>}
+                       {acc.isZeroBalance
+                         ? <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">Zero Balance</span>
+                         : <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500">Min. Balance</span>
+                       }
                     </td>
                     <td className="px-6 py-4 text-xs text-[var(--color-text-muted)]">{acc.bank}</td>
+                    <td className="px-6 py-4 text-right">
+                       <span className="text-xs text-[var(--color-text-faint)]">
+                         {acc.isZeroBalance ? "—" : `₹${Number(acc.minimumBalance || 0).toLocaleString("en-IN")}`}
+                       </span>
+                    </td>
                     <td className="px-6 py-4 text-right">
                        <span className="text-sm font-semibold text-emerald-500">₹{Number(acc.balance || 0).toLocaleString("en-IN")}</span>
                     </td>
@@ -189,6 +234,10 @@ const BankAccountPage = () => {
                   <span className="text-sm font-medium text-[var(--color-text-base)]">{acc.nickname}</span>
                   <span className="text-xs text-[var(--color-text-muted)] mt-1">{acc.bank}</span>
                   {acc.accnumber && <span className="text-[10px] text-[var(--color-text-faint)] font-mono mt-1">****{String(acc.accnumber).slice(-4)}</span>}
+                  {acc.isZeroBalance
+                    ? <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 w-fit">Zero Balance</span>
+                    : <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 w-fit">Min: ₹{Number(acc.minimumBalance || 0).toLocaleString("en-IN")}</span>
+                  }
                 </div>
                 <div className="text-right flex flex-col items-end">
                   <span className="text-[10px] items-center text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Balance</span>
@@ -213,16 +262,22 @@ const BankAccountPage = () => {
               <input type="number" value={newBalance} onChange={(e) => { setNewBalance(e.target.value); setBalanceError(""); }}
                 placeholder="e.g. 1000 or -500" className={modalInputCls} required />
             </ModalField>
+            {selectedAcc.minimumBalance > 0 && !selectedAcc.isZeroBalance && (
+              <p className="text-[11px] text-amber-500 -mt-2">
+                ⚠ Minimum balance: ₹{Number(selectedAcc.minimumBalance).toLocaleString("en-IN")}
+              </p>
+            )}
             {balanceError && <p className="text-xs text-rose-500 mt-1">{balanceError}</p>}
             <ModalFooter>
-              <CancelBtn onClick={() => { setSelectedAcc(null); setBalanceError(""); }} />
-              <ConfirmBtn type="submit">Update</ConfirmBtn>
+              <CancelBtn onClick={() => { setSelectedAcc(null); setBalanceError(""); }} disabled={isSubmitting} />
+              <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Updating..." : "Update"}</ConfirmBtn>
             </ModalFooter>
           </form>
         )}
       </Modal>
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="New Account">
+      {/* ── CREATE ACCOUNT MODAL ── */}
+      <Modal open={showModal} onClose={() => { setShowModal(false); resetCreateForm(); }} title="New Account">
         <form onSubmit={handleCreate} className="flex flex-col gap-4 p-1">
           <ModalField label="Nickname">
             <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)}
@@ -239,14 +294,55 @@ const BankAccountPage = () => {
                <input type="text" value={accnumber} onChange={(e) => setAccnumber(e.target.value)}
                  className={modalInputCls} maxLength={4} />
              </ModalField>
-             <ModalField label="Initial Balance">
+             <ModalField label="Initial Balance (₹)">
                <input type="number" value={balance} onChange={(e) => setBalance(e.target.value)}
-                 className={modalInputCls} />
+                 className={modalInputCls} min={0} />
              </ModalField>
           </div>
+
+          {/* ── Zero Balance Toggle ── */}
+          <div className="flex items-center justify-between bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-xl px-4 py-3">
+            <div>
+              <p className="text-xs font-medium text-[var(--color-text-base)]">Zero Balance Account</p>
+              <p className="text-[10px] text-[var(--color-text-faint)] mt-0.5">
+                {isZeroBalance ? "No minimum balance required" : "Requires a minimum balance"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setIsZeroBalance(!isZeroBalance); setMinimumBalance(""); }}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                isZeroBalance ? "bg-emerald-500" : "bg-[var(--color-border)]"
+              }`}
+              role="switch"
+              aria-checked={isZeroBalance}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                  isZeroBalance ? "translate-x-4" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Minimum Balance field — shown only when NOT a zero-balance account */}
+          {!isZeroBalance && (
+            <ModalField label="Minimum Balance (₹)">
+              <input
+                type="number"
+                value={minimumBalance}
+                onChange={(e) => setMinimumBalance(e.target.value)}
+                placeholder="e.g. 5000"
+                className={modalInputCls}
+                min={0}
+                required
+              />
+            </ModalField>
+          )}
+
           <ModalFooter>
-            <CancelBtn onClick={() => setShowModal(false)} />
-            <ConfirmBtn type="submit">Create</ConfirmBtn>
+            <CancelBtn onClick={() => { setShowModal(false); resetCreateForm(); }} disabled={isSubmitting} />
+            <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating..." : "Create"}</ConfirmBtn>
           </ModalFooter>
         </form>
       </Modal>
@@ -266,10 +362,15 @@ const BankAccountPage = () => {
               <input type="number" value={sendAmount} onChange={(e) => { setSendAmount(e.target.value); setSendError(""); }}
                 placeholder="0.00" className={modalInputCls} required />
             </ModalField>
+            {sendFromAcc.minimumBalance > 0 && !sendFromAcc.isZeroBalance && (
+              <p className="text-[11px] text-amber-500 -mt-2">
+                ⚠ Min balance of ₹{Number(sendFromAcc.minimumBalance).toLocaleString("en-IN")} must remain in "{sendFromAcc.nickname}"
+              </p>
+            )}
             {sendError && <p className="text-xs text-rose-500 mt-1">{sendError}</p>}
             <ModalFooter>
-              <CancelBtn onClick={() => { setShowSendModal(false); setSendError(""); }} />
-              <ConfirmBtn type="submit">Transfer</ConfirmBtn>
+              <CancelBtn onClick={() => { setShowSendModal(false); setSendError(""); }} disabled={isSubmitting} />
+              <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Transferring..." : "Transfer"}</ConfirmBtn>
             </ModalFooter>
           </form>
         )}
