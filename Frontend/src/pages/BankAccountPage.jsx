@@ -10,6 +10,7 @@ import Modal, {
   modalInputCls, modalSelectCls,
 } from "../components/Modal.jsx";
 import { useTheme } from "../theme/ThemeContext";
+import MinBalanceWarningBanner from "../components/MinBalanceWarningBanner.jsx";
 
 const BANK_LIST = [
   "Axis Bank","HDFC Bank","ICICI Bank","State Bank of India","Bank of Baroda",
@@ -150,6 +151,9 @@ const BankAccountPage = () => {
           </button>
         </div>
       </div>
+
+      {/* ── MIN BALANCE WARNING ─────────────────────────────── */}
+      <MinBalanceWarningBanner />
 
       {/* ── SEARCH ─────────────────────────────────────────────── */}
       <div className="relative mb-6">

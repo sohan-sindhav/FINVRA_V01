@@ -1,17 +1,41 @@
 import BankAcc from "../models/bankAcc.models.js";
 
-// Helper: compute the effective minimum balance for an account
+// Helper: compute the effective minimum balance floor for an account
 const getFloor = (account) =>
   account.isZeroBalance ? 0 : (account.minimumBalance || 0);
+
+// Helper: update minBalanceBreachSince on accounts lazily (called on every GET)
+// Only writes to DB when the breach state actually changes (edge transitions).
+const syncBreachStatus = async (accounts) => {
+  const now = new Date();
+  const updates = [];
+
+  for (const acc of accounts) {
+    if (acc.isZeroBalance) continue; // zero-balance accounts don't have a floor rule
+
+    const isBelowMin = acc.balance < (acc.minimumBalance || 0);
+
+    if (isBelowMin && acc.minBalanceBreachSince == null) {
+      // Just crossed below — stamp today
+      updates.push(
+        BankAcc.findByIdAndUpdate(acc._id, { minBalanceBreachSince: now })
+      );
+    } else if (!isBelowMin && acc.minBalanceBreachSince != null) {
+      // Recovered — clear the breach date
+      updates.push(
+        BankAcc.findByIdAndUpdate(acc._id, { minBalanceBreachSince: null })
+      );
+    }
+  }
+
+  if (updates.length > 0) await Promise.all(updates);
+};
 
 export const createBankAcc = async (req, res) => {
   const { nickname, bank, accnumber, balance, isZeroBalance, minimumBalance } = req.body;
   const userId = req.user._id;
 
-  const isExist = await BankAcc.findOne({
-    nickname,
-    userId,
-  });
+  const isExist = await BankAcc.findOne({ nickname, userId });
 
   if (isExist) {
     return res
@@ -46,6 +70,12 @@ export const createBankAcc = async (req, res) => {
 
 export const getBankAcc = async (req, res) => {
   try {
+    const accounts = await BankAcc.find({ userId: req.user._id });
+
+    // Lazily sync breach timestamps — only writes on state-change edge cases
+    await syncBreachStatus(accounts);
+
+    // Re-fetch so the response reflects any just-updated breach fields
     const bankacc = await BankAcc.find({ userId: req.user._id });
     return res.status(200).json({ success: true, bankacc });
   } catch (error) {

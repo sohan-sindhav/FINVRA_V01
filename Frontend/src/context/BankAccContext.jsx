@@ -1,7 +1,10 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useMemo } from "react";
 import axiosInstance from "../configs/AxiosInstance.js";
 
 export const BankAccContext = createContext();
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const MIN_BREACH_DAYS = 10;
 
 export const BankAccProvider = ({ children }) => {
   const [bankAccounts, setBankAccounts] = useState([]);
@@ -13,12 +16,9 @@ export const BankAccProvider = ({ children }) => {
     try {
       setLoading(true);
       const res = await axiosInstance.get("/api/bank/account/get");
-
       setBankAccounts(res.bankacc);
     } catch (error) {
-      // console.log("FULL ERROR:", error);
-      // console.log("ERROR RESPONSE:", error?.response);
-      // console.log("ERROR DATA:", error?.response?.data);
+      // console.log(error);
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ export const BankAccProvider = ({ children }) => {
   const createBankAcc = async (data) => {
     try {
       const res = await axiosInstance.post("/api/bank/account/create", data);
-      await getBankAcc(); // refresh list
+      await getBankAcc();
       return res.data;
     } catch (error) {
       console.log(error);
@@ -50,7 +50,6 @@ export const BankAccProvider = ({ children }) => {
         `/api/bank/account/updateBalance/${id}`,
         balance,
       );
-
       await axiosInstance.post("/api/bank/account/BankHistory", {
         fromId: id,
         toId: id,
@@ -64,6 +63,7 @@ export const BankAccProvider = ({ children }) => {
       return { success: false, error: msg };
     }
   };
+
   const sendMoney = async (fromId, { toId, amount }) => {
     try {
       await axiosInstance.post(`/api/bank/account/sendMoney/${fromId}`, {
@@ -86,7 +86,7 @@ export const BankAccProvider = ({ children }) => {
         fromId,
         toId,
         amount,
-        transactionType:"transfer",
+        transactionType: "transfer",
       });
       console.log("bank history created");
       getBankHistory();
@@ -115,6 +115,16 @@ export const BankAccProvider = ({ children }) => {
     }
   };
 
+  // Accounts that have been continuously below their minimum balance for 10+ days
+  const minBalanceWarnings = useMemo(() => {
+    const now = Date.now();
+    return bankAccounts.filter((acc) => {
+      if (acc.isZeroBalance || !acc.minBalanceBreachSince) return false;
+      const breachMs = now - new Date(acc.minBalanceBreachSince).getTime();
+      return breachMs >= MIN_BREACH_DAYS * MS_PER_DAY;
+    });
+  }, [bankAccounts]);
+
   useEffect(() => {
     getBankAcc();
     getBankHistory();
@@ -134,6 +144,7 @@ export const BankAccProvider = ({ children }) => {
         createBankHistory,
         bankHistory,
         reverseBankHistory,
+        minBalanceWarnings,
       }}
     >
       {children}

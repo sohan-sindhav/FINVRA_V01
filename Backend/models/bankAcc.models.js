@@ -6,7 +6,7 @@ const BankAccSchema = new mongoose.Schema({
   nickname: { required: true, type: String },
   bank: { enum: indianBanksEnum, type: String, required: true },
   accnumber: { 
-    type: String, // Changed from Number to String for encryption
+    type: String,
     set: (v) => (v ? encrypt(v.toString()) : ""),
     get: (v) => (v ? decrypt(v) : ""),
   },
@@ -33,6 +33,12 @@ const BankAccSchema = new mongoose.Schema({
   blockedBalance: {
     type: Number,
     default: 0,
+  },
+  // Timestamp of the first day balance dropped below minimumBalance
+  // and has stayed there continuously. Cleared to null when balance recovers.
+  minBalanceBreachSince: {
+    type: Date,
+    default: null,
   },
 }, {
   toJSON: { getters: true },

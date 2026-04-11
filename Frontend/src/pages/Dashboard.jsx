@@ -28,6 +28,7 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../theme/ThemeContext";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import MinBalanceWarningBanner from "../components/MinBalanceWarningBanner.jsx";
 
 const Dashboard = () => {
   const { bankAccounts } = useBankAccounts();
@@ -109,6 +110,9 @@ const Dashboard = () => {
            )}
         </div>
       </div>
+
+      {/* MIN BALANCE WARNING */}
+      {isBankEnabled && <MinBalanceWarningBanner />}
 
       {/* CORE METRICS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
@@ -281,16 +285,16 @@ const Dashboard = () => {
                 {bankAccounts.length === 0 ? (
                    <p className="text-sm text-[var(--color-text-muted)] text-center py-8">No linked accounts.</p>
                 ) : (
-                  [...bankAccounts].sort((a,b) => b.balance - a.balance).slice(0, 6).map((acc, i) => (
+                  [...bankAccounts].sort((a,b) => (b.balance || 0) - (a.balance || 0)).slice(0, 6).map((acc, i) => (
                     <div key={acc._id} className="flex justify-between items-center p-3.5 rounded-xl bg-[var(--color-bg-page)] border border-[var(--color-border)] hover:border-indigo-500/30 transition-colors">
                        <div className="flex flex-col">
                           <span className="text-sm font-semibold text-[var(--color-text-base)]">{acc.nickname}</span>
                           <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">{acc.bank || "Unknown"}</span>
                        </div>
                        <div className="text-right">
-                          <p className="text-sm font-bold text-[var(--color-text-base)]">₹{acc.balance.toLocaleString("en-IN")}</p>
+                          <p className="text-sm font-bold text-[var(--color-text-base)]">₹{(acc.balance || 0).toLocaleString("en-IN")}</p>
                           <span className="w-12 h-0.5 mt-1 bg-indigo-500/10 rounded-full overflow-hidden block ml-auto">
-                             <motion.span initial={{ width: 0 }} animate={{ width: `${(acc.balance/(totalBankBalance||1))*100}%` }} className="h-full bg-indigo-500 block rounded-full" />
+                             <motion.span initial={{ width: 0 }} animate={{ width: `${((acc.balance || 0) / (totalBankBalance || 1)) * 100}%` }} className="h-full bg-indigo-500 block rounded-full" />
                           </span>
                        </div>
                     </div>
@@ -331,7 +335,7 @@ const Dashboard = () => {
                         </span>
                       </div>
                       <div className="flex flex-col text-right">
-                         <span className="text-base font-bold text-[var(--color-text-base)]">₹{app.amount.toLocaleString("en-IN")}</span>
+                         <span className="text-base font-bold text-[var(--color-text-base)]">₹{(app.amount || 0).toLocaleString("en-IN")}</span>
                          <span className="text-[10px] font-semibold text-amber-500 mt-0.5 bg-amber-500/10 px-2 rounded-full self-end uppercase">Blocked</span>
                       </div>
                     </div>
