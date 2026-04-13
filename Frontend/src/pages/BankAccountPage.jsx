@@ -358,7 +358,7 @@ const BankAccountPage = () => {
               <select value={sendToId} onChange={(e) => setSendToId(e.target.value)} className={modalSelectCls} required>
                 <option value="">Select Destination</option>
                 {bankAccounts.filter((a) => a._id !== sendFromAcc._id).map((a) => (
-                  <option key={a._id} value={a._id}>{a.nickname} (₹{a.balance.toLocaleString("en-IN")})</option>
+                  <option key={a._id} value={a._id}>{a.nickname} (₹{Number(a.balance || 0).toLocaleString("en-IN")})</option>
                 ))}
               </select>
             </ModalField>
