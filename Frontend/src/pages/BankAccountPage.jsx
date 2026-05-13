@@ -45,6 +45,7 @@ const BankAccountPage = () => {
   const [selectedAcc,   setSelectedAcc]   = useState(null);
   const [newBalance,    setNewBalance]     = useState("");
   const [balanceError,  setBalanceError]  = useState("");
+  const [balanceWarning, setBalanceWarning] = useState("");
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendFromAcc,   setSendFromAcc]   = useState(null);
   const [sendToId,      setSendToId]      = useState("");
@@ -83,13 +84,18 @@ const BankAccountPage = () => {
     }
   };
 
-  const handleUpdateBalance = async (e) => {
-    e.preventDefault();
+  const handleUpdateBalance = async (e, forceUpdate = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (isSubmitting) return;
     setBalanceError("");
+    setBalanceWarning("");
     setIsSubmitting(true);
     try {
-      const result = await updateBalance({ balance: Number(newBalance) }, selectedAcc._id);
+      const result = await updateBalance({ balance: Number(newBalance), force: forceUpdate }, selectedAcc._id);
+      if (result.warning) {
+        setBalanceWarning(result.warningMessage);
+        return;
+      }
       if (!result.success) { setBalanceError(result.error); return; }
       await getBankAcc();
       setNewBalance(""); setSelectedAcc(null);
@@ -100,7 +106,7 @@ const BankAccountPage = () => {
 
   const handleResetBalance = async () => {
     setBalanceError("");
-    const result = await updateBalance({ balance: 0 }, selectedAcc._id);
+    const result = await updateBalance({ balance: 0, force: true }, selectedAcc._id);
     if (!result.success) { setBalanceError(result.error); return; }
     await getBankAcc();
     setNewBalance(""); setSelectedAcc(null);
@@ -288,7 +294,7 @@ const BankAccountPage = () => {
       </div>
 
       {/* ── MODALS ── */}
-      <Modal open={!!selectedAcc} onClose={() => { setSelectedAcc(null); setBalanceError(""); }} title="Update Balance">
+      <Modal open={!!selectedAcc} onClose={() => { setSelectedAcc(null); setBalanceError(""); setBalanceWarning(""); }} title="Update Balance">
         {selectedAcc && (
           <form onSubmit={handleUpdateBalance} className="flex flex-col gap-4 p-1">
             <ModalField label="New Balance (₹)">
@@ -301,10 +307,36 @@ const BankAccountPage = () => {
               </p>
             )}
             {balanceError && <p className="text-xs text-rose-500 mt-1">{balanceError}</p>}
-            <ModalFooter>
-              <CancelBtn onClick={() => { setSelectedAcc(null); setBalanceError(""); }} disabled={isSubmitting} />
-              <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Updating..." : "Update"}</ConfirmBtn>
-            </ModalFooter>
+            
+            {balanceWarning && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col gap-2">
+                <p className="text-xs text-amber-400 leading-relaxed">⚠ {balanceWarning}</p>
+                <div className="flex gap-2 justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setBalanceWarning("")}
+                    className="text-[11px] px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-base)] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleUpdateBalance(null, true)}
+                    className="text-[11px] px-3 py-1.5 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Updating..." : "Update Anyway"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!balanceWarning && (
+              <ModalFooter>
+                <CancelBtn onClick={() => { setSelectedAcc(null); setBalanceError(""); setBalanceWarning(""); }} disabled={isSubmitting} />
+                <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Updating..." : "Update"}</ConfirmBtn>
+              </ModalFooter>
+            )}
           </form>
         )}
       </Modal>

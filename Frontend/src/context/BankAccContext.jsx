@@ -44,19 +44,26 @@ export const BankAccProvider = ({ children }) => {
     }
   };
 
-  const updateBalance = async (balance, id) => {
+  const updateBalance = async (data, id) => {
     try {
-      await axiosInstance.post(
+      const res = await axiosInstance.post(
         `/api/bank/account/updateBalance/${id}`,
-        balance,
+        data,
       );
+
+      // Backend returned a minimum-balance warning — surface it to the UI
+      if (res?.warning) {
+        return { success: false, warning: true, warningMessage: res.message };
+      }
+
       await axiosInstance.post("/api/bank/account/BankHistory", {
         fromId: id,
         toId: id,
-        amount: balance.balance,
+        amount: data.balance,
         transactionType: "self_update",
       });
       await getBankHistory();
+      await getBankAcc();
       return { success: true };
     } catch (error) {
       const msg = error?.message || "Failed to update balance";

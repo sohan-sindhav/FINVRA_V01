@@ -132,22 +132,27 @@ export const deleteBankAcc = async (req, res) => {
 export const updateBalance = async (req, res) => {
   try {
     const { id } = req.params;
-    const { balance } = req.body; // absolute new balance value
+    const { balance, force } = req.body; // absolute new balance value
 
     const account = await BankAcc.findById(id);
     if (!account) {
       return res.status(404).json({ message: "Bank account not found" });
     }
 
+    if (balance < 0) {
+      return res.status(400).json({ message: "Balance cannot be negative." });
+    }
+
     const floor = getFloor(account);
 
-    // Prevent setting balance below the minimum floor
-    if (balance < floor) {
+    // Prevent setting balance below the minimum floor unless forced
+    if (balance < floor && !force) {
       const floorLabel = floor === 0
         ? "zero"
         : `₹${floor.toLocaleString("en-IN")}`;
-      return res.status(400).json({
-        message: `Balance cannot be set below the minimum balance (${floorLabel}) for "${account.nickname}".`,
+      return res.status(200).json({
+        warning: true,
+        message: `Setting this balance will bring "${account.nickname}" below its minimum balance of ${floorLabel}. Do you want to proceed anyway?`,
       });
     }
 
@@ -157,7 +162,7 @@ export const updateBalance = async (req, res) => {
       { new: true },
     );
 
-    return res.status(200).json({ updatedAccount });
+    return res.status(200).json({ success: true, updatedAccount });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error", error });
   }
@@ -175,6 +180,13 @@ export const sendMoney = async (req, res) => {
     }
 
     const newBalance = fromBankAcc.balance - amount;
+
+    if (newBalance < 0) {
+      return res.status(400).json({
+        message: `Insufficient balance in "${fromBankAcc.nickname}". The balance after transfer would be ₹${newBalance.toLocaleString("en-IN")}.`,
+      });
+    }
+
     const floor = getFloor(fromBankAcc);
 
     // Warn if transfer would breach minimum balance — but allow with force flag
