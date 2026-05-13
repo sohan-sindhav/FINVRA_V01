@@ -137,24 +137,24 @@ const BankAccountPage = () => {
   const sortedAccounts = [...filteredAccounts].sort((a, b) => a.nickname.localeCompare(b.nickname));
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-full flex flex-col transition-colors duration-300 p-4 md:p-8">
+    <div className="bg-transparent min-h-full flex flex-col transition-colors duration-300">
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center mb-10">
+      <div className="flex justify-between items-center px-6 md:px-10 py-8 border-b border-white/[0.04]">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-base)]">Bank Accounts</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 tracking-tight">
+          <h1 className="text-[24px] font-black text-white tracking-tight">Bank Accounts</h1>
+          <p className="text-[13px] font-medium text-white/40 mt-1 uppercase tracking-wider">
              Available Balance: ₹{totalBalance.toLocaleString("en-IN")}
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate("/bank-history")} className="p-2 text-[var(--color-text-muted)] hover:text-indigo-500 transition-colors" title="History"><History size={18} /></button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/bank-history")} className="w-[40px] h-[40px] flex items-center justify-center rounded-[12px] bg-white/[0.02] border border-white/[0.04] text-white/40 hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/20 transition-all duration-300 shadow-sm" title="History"><History size={18} /></button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all shadow-sm"
+            className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] h-[40px]"
           >
-            <Plus size={16} /> Add Account
+            <Plus size={16} /> Add
           </button>
         </div>
       </div>
@@ -163,110 +163,112 @@ const BankAccountPage = () => {
       <MinBalanceWarningBanner />
 
       {/* ── SEARCH ─────────────────────────────────────────────── */}
-      <div className="relative mb-6">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+      <div className="px-6 md:px-10 py-6 relative">
+        <Search size={16} className="absolute left-10 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
         <input 
           type="text"
           placeholder="Search accounts..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] py-2.5 pl-10 pr-4 text-sm text-[var(--color-text-base)] rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all placeholder:text-[var(--color-text-faint)]"
+          className="w-full bg-white/[0.02] border border-white/[0.06] rounded-[14px] py-3 pl-12 pr-4 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
         />
       </div>
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
-      <div className="hidden md:block bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
-        <table className="w-full border-collapse min-w-[700px]">
-           <thead>
-              <tr className="border-b border-[var(--color-border)]">
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-12">#</th>
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Account</th>
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Bank</th>
-                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Min. Balance</th>
-                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Balance</th>
-                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-32">Actions</th>
-              </tr>
-           </thead>
-           <tbody className="divide-y divide-[var(--color-border)]">
-              {loading && sortedAccounts.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-20 text-center text-xs text-[var(--color-text-faint)]">Loading records...</td>
+      <div className="hidden md:block px-6 md:px-10 pb-10">
+        <div className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+          <table className="w-full border-collapse min-w-[700px]">
+             <thead>
+                <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Account</th>
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Bank</th>
+                   <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40">Min. Balance</th>
+                   <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40">Balance</th>
+                   <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40 w-40">Actions</th>
                 </tr>
-              ) : sortedAccounts.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-20 text-center text-xs text-[var(--color-text-faint)]">No accounts found.</td>
-                </tr>
-              ) : (
-                sortedAccounts.map((acc, i) => (
-                  <tr key={acc._id} className="hover:bg-[var(--color-bg-page)]/50 transition-colors group">
-                    <td className="px-6 py-4 text-xs text-[var(--color-text-faint)]">{i + 1}</td>
-                    <td className="px-6 py-4">
-                       <span className="text-sm font-medium text-[var(--color-text-base)]">{acc.nickname}</span>
-                       {acc.accnumber && <span className="block text-[10px] text-[var(--color-text-faint)] font-mono mt-0.5 opacity-60">****{String(acc.accnumber).slice(-4)}</span>}
-                       {acc.isZeroBalance
-                         ? <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">Zero Balance</span>
-                         : <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500">Min. Balance</span>
-                       }
-                    </td>
-                    <td className="px-6 py-4 text-xs text-[var(--color-text-muted)]">{acc.bank}</td>
-                    <td className="px-6 py-4 text-right">
-                       <span className="text-xs text-[var(--color-text-faint)]">
-                         {acc.isZeroBalance ? "—" : `₹${Number(acc.minimumBalance || 0).toLocaleString("en-IN")}`}
-                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       {(() => {
-                         const isBelowMin = !acc.isZeroBalance && acc.minimumBalance > 0 && acc.balance < acc.minimumBalance;
-                         return (
-                           <span className={`text-sm font-semibold ${
-                             isBelowMin ? "text-amber-500" : "text-emerald-500"
-                           }`}>
-                             ₹{Number(acc.balance || 0).toLocaleString("en-IN")}
-                             {isBelowMin && <span className="ml-1 text-[10px]">⚠</span>}
-                           </span>
-                         );
-                       })()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setSelectedAcc(acc)} className="p-1.5 text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors" title="Adjust"><RefreshCw size={14} /></button>
-                          <button onClick={() => { setSendFromAcc(acc); setShowSendModal(true); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-emerald-500 transition-colors" title="Transfer"><Send size={14} /></button>
-                          <button onClick={() => { if(confirm("Delete account?")) deleteBankAcc(acc._id); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-rose-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
-                       </div>
-                    </td>
+             </thead>
+             <tbody className="divide-y divide-white/[0.04]">
+                {loading && sortedAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-24 text-center text-[13px] font-medium text-white/40">Loading records...</td>
                   </tr>
-                ))
-              )}
-           </tbody>
-        </table>
+                ) : sortedAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-24 text-center text-[13px] font-medium text-white/40">No accounts found.</td>
+                  </tr>
+                ) : (
+                  sortedAccounts.map((acc, i) => (
+                    <tr key={acc._id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
+                      <td className="px-6 py-4">
+                         <span className="text-[14px] font-semibold text-white/90">{acc.nickname}</span>
+                         {acc.accnumber && <span className="block text-[11px] font-bold text-white/20 font-mono mt-0.5 uppercase tracking-widest">****{String(acc.accnumber).slice(-4)}</span>}
+                         {acc.isZeroBalance
+                           ? <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[6px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Zero Balance</span>
+                           : <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[6px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Min. Balance</span>
+                         }
+                      </td>
+                      <td className="px-6 py-4 text-[13px] font-medium text-white/50">{acc.bank}</td>
+                      <td className="px-6 py-4 text-right">
+                         <span className="text-[13px] font-medium text-white/30">
+                           {acc.isZeroBalance ? "—" : `₹${Number(acc.minimumBalance || 0).toLocaleString("en-IN")}`}
+                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right tabular-nums">
+                         {(() => {
+                           const isBelowMin = !acc.isZeroBalance && acc.minimumBalance > 0 && acc.balance < acc.minimumBalance;
+                           return (
+                             <span className={`text-[14px] font-bold ${
+                               isBelowMin ? "text-amber-400" : "text-emerald-400"
+                             }`}>
+                               ₹{Number(acc.balance || 0).toLocaleString("en-IN")}
+                               {isBelowMin && <span className="ml-1 text-[10px]">⚠</span>}
+                             </span>
+                           );
+                         })()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => setSelectedAcc(acc)} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-indigo-500/10 hover:text-indigo-400 border border-transparent hover:border-indigo-500/20 transition-all" title="Adjust"><RefreshCw size={14} /></button>
+                            <button onClick={() => { setSendFromAcc(acc); setShowSendModal(true); }} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-emerald-500/10 hover:text-emerald-400 border border-transparent hover:border-emerald-500/20 transition-all" title="Transfer"><Send size={14} /></button>
+                            <button onClick={() => { if(confirm("Delete account?")) deleteBankAcc(acc._id); }} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all" title="Delete"><Trash2 size={14} /></button>
+                         </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+             </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── MOBILE CARDS ──────────────────────────────────────── */}
-      <div className="md:hidden flex flex-col gap-4">
+      <div className="md:hidden flex flex-col gap-4 px-6 pb-10">
         {loading && sortedAccounts.length === 0 ? (
-          <div className="py-20 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-sm">Loading records...</div>
+          <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">Loading records...</div>
         ) : sortedAccounts.length === 0 ? (
-          <div className="py-20 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-sm">No accounts found.</div>
+          <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">No accounts found.</div>
         ) : (
           sortedAccounts.map((acc, i) => (
-            <div key={acc._id} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+            <div key={acc._id} className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] p-5 flex flex-col gap-4 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
               <div className="flex justify-between items-start">
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-[var(--color-text-base)]">{acc.nickname}</span>
-                  <span className="text-xs text-[var(--color-text-muted)] mt-1">{acc.bank}</span>
-                  {acc.accnumber && <span className="text-[10px] text-[var(--color-text-faint)] font-mono mt-1">****{String(acc.accnumber).slice(-4)}</span>}
+                  <span className="text-[14px] font-semibold text-white/90">{acc.nickname}</span>
+                  <span className="text-[13px] font-medium text-white/50 mt-1">{acc.bank}</span>
+                  {acc.accnumber && <span className="text-[11px] font-bold text-white/20 font-mono mt-1 uppercase tracking-widest">****{String(acc.accnumber).slice(-4)}</span>}
                   {acc.isZeroBalance
-                    ? <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 w-fit">Zero Balance</span>
-                    : <span className="inline-block mt-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 w-fit">Min: ₹{Number(acc.minimumBalance || 0).toLocaleString("en-IN")}</span>
+                    ? <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[6px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">Zero Balance</span>
+                    : <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-[6px] bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">Min: ₹{Number(acc.minimumBalance || 0).toLocaleString("en-IN")}</span>
                   }
                 </div>
                 <div className="text-right flex flex-col items-end">
-                  <span className="text-[10px] items-center text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Balance</span>
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1.5">Balance</span>
                   {(() => {
                     const isBelowMin = !acc.isZeroBalance && acc.minimumBalance > 0 && acc.balance < acc.minimumBalance;
                     return (
-                      <span className={`text-base font-semibold ${
-                        isBelowMin ? "text-amber-500" : "text-emerald-500"
+                      <span className={`text-[16px] font-bold tabular-nums ${
+                        isBelowMin ? "text-amber-400" : "text-emerald-400"
                       }`}>
                         ₹{Number(acc.balance || 0).toLocaleString("en-IN")}
                         {isBelowMin && <span className="ml-1 text-[10px]">⚠</span>}
@@ -275,10 +277,10 @@ const BankAccountPage = () => {
                   })()}
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-4 pt-4 border-t border-[var(--color-border)] mt-1">
-                <button onClick={() => setSelectedAcc(acc)} className="text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors flex items-center gap-1.5 text-xs font-semibold"><RefreshCw size={14} /> Adjust</button>
-                <button onClick={() => { setSendFromAcc(acc); setShowSendModal(true); }} className="text-[var(--color-text-faint)] hover:text-emerald-500 transition-colors flex items-center gap-1.5 text-xs font-semibold"><Send size={14} /> Transfer</button>
-                <button onClick={() => { if(confirm("Delete account?")) deleteBankAcc(acc._id); }} className="text-[var(--color-text-faint)] hover:text-rose-500 transition-colors flex items-center gap-1.5 text-xs font-semibold"><Trash2 size={14} /> Delete</button>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.04] mt-1">
+                <button onClick={() => setSelectedAcc(acc)} className="text-white/40 hover:text-indigo-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-indigo-500/10"><RefreshCw size={14} /> Adjust</button>
+                <button onClick={() => { setSendFromAcc(acc); setShowSendModal(true); }} className="text-white/40 hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-emerald-500/10"><Send size={14} /> Transfer</button>
+                <button onClick={() => { if(confirm("Delete account?")) deleteBankAcc(acc._id); }} className="text-white/40 hover:text-rose-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-rose-500/10"><Trash2 size={14} /> Delete</button>
               </div>
             </div>
           ))

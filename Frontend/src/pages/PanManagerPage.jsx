@@ -25,16 +25,16 @@ const Badge = ({ children, color = "emerald" }) => {
 const Tab = ({ active, onClick, children, badge }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+    className={`flex items-center gap-2 px-6 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-all rounded-[10px] ${
       active
-        ? "bg-indigo-500 text-white shadow-sm"
-        : "text-[var(--color-text-muted)] hover:text-[var(--color-text-base)] hover:bg-[var(--color-bg-card)]"
+        ? "bg-white/[0.06] text-white shadow-sm"
+        : "text-white/40 hover:text-white/80 hover:bg-white/[0.02]"
     }`}
   >
     {children}
     {badge > 0 && (
-      <span className={`min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-black rounded-full ${
-        active ? "bg-white/20 text-white" : "bg-indigo-500 text-white"
+      <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+        active ? "bg-indigo-500 text-white" : "bg-white/[0.05] text-white/40"
       }`}>
         {badge}
       </span>
@@ -153,44 +153,46 @@ const OutgoingShares = ({ shares, revokeShare }) => {
   if (!shares.length) return null;
 
   return (
-    <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] overflow-hidden">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-base)] transition-colors"
-      >
-        <span>My Active Shares ({shares.length})</span>
-        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
-      {open && (
-        <div className="border-t border-[var(--color-border)] divide-y divide-[var(--color-border)]">
-          {shares.map((s) => (
-            <div key={s._id} className="flex items-center justify-between px-4 py-3 gap-3">
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-xs font-semibold text-[var(--color-text-base)] truncate">
-                  {s.toUser?.name}
-                </span>
-                <span className="text-[10px] text-[var(--color-text-faint)]">{s.toUser?.email}</span>
-                <span className="text-[10px] text-[var(--color-text-faint)] mt-0.5">
-                  {s.panCards?.length} PAN{s.panCards?.length !== 1 ? "s" : ""} shared
-                </span>
+    <div className="px-6 md:px-10 mb-6">
+      <div className="rounded-[16px] border border-white/[0.04] bg-[#111827]/50 backdrop-blur-xl overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-6 py-4 text-[13px] font-bold uppercase tracking-wider text-white/40 hover:text-white/80 transition-colors bg-white/[0.02]"
+        >
+          <span>My Active Shares ({shares.length})</span>
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+        {open && (
+          <div className="border-t border-white/[0.04] divide-y divide-white/[0.04]">
+            {shares.map((s) => (
+              <div key={s._id} className="flex items-center justify-between px-6 py-4 gap-4">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-[14px] font-semibold text-white/90 truncate">
+                    {s.toUser?.name}
+                  </span>
+                  <span className="text-[13px] font-medium text-white/50">{s.toUser?.email}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-400 mt-1">
+                    {s.panCards?.length} PAN{s.panCards?.length !== 1 ? "s" : ""} shared
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <Badge color={s.status === "accepted" ? "emerald" : "amber"}>
+                    {s.status}
+                  </Badge>
+                  <button
+                    onClick={() => handleRevoke(s._id)}
+                    disabled={revoking === s._id}
+                    className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all disabled:opacity-40"
+                    title="Revoke share"
+                  >
+                    {revoking === s._id ? <RotateCcw size={14} className="animate-spin" /> : <X size={14} />}
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color={s.status === "accepted" ? "emerald" : "amber"}>
-                  {s.status}
-                </Badge>
-                <button
-                  onClick={() => handleRevoke(s._id)}
-                  disabled={revoking === s._id}
-                  className="p-1.5 rounded-lg text-[var(--color-text-faint)] hover:text-rose-500 hover:bg-rose-500/10 transition-all disabled:opacity-40"
-                  title="Revoke share"
-                >
-                  {revoking === s._id ? <RotateCcw size={13} className="animate-spin" /> : <X size={13} />}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -251,14 +253,14 @@ const PanManagerPage = () => {
 
   // ── Row / Card helpers ───────────────────────────────────────────────────
   const renderDesktopRow = (pan, i, deletable) => (
-    <tr key={pan._id} className="hover:bg-[var(--color-bg-page)]/50 transition-colors group">
-      <td className="px-6 py-4 text-xs text-[var(--color-text-faint)]">{i + 1}</td>
+    <tr key={pan._id} className="hover:bg-white/[0.02] transition-colors group">
+      <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
       <td className="px-6 py-4">
-        <span className="text-sm font-semibold tracking-widest font-mono text-[var(--color-text-base)]">
+        <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">
           {pan.panNumber}
         </span>
       </td>
-      <td className="px-6 py-4 text-xs text-[var(--color-text-muted)] italic">{pan.nameOnPan}</td>
+      <td className="px-6 py-4 text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</td>
       <td className="px-6 py-4">
         <div className="flex items-center justify-center">
           <Badge color="emerald">Verified</Badge>
@@ -266,17 +268,17 @@ const PanManagerPage = () => {
       </td>
       <td className="px-6 py-4 text-right">
         {deletable && (
-          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setIsShareOpen(true)}
-              className="p-1.5 text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors"
+              className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-indigo-500/10 hover:text-indigo-400 border border-transparent hover:border-indigo-500/20 transition-all"
               title="Share this PAN"
             >
               <Share2 size={14} />
             </button>
             <button
               onClick={() => { if (confirm("Delete card?")) deletePanCard(pan._id); }}
-              className="p-1.5 text-[var(--color-text-faint)] hover:text-rose-500 transition-colors"
+              className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -288,20 +290,20 @@ const PanManagerPage = () => {
   );
 
   const renderMobileCard = (pan, deletable) => (
-    <div key={pan._id} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+    <div key={pan._id} className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] p-5 flex flex-col gap-4 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
       <div className="flex justify-between items-start gap-4">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-semibold tracking-widest font-mono text-[var(--color-text-base)]">{pan.panNumber}</span>
-          <span className="text-xs text-[var(--color-text-muted)] italic">{pan.nameOnPan}</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">{pan.panNumber}</span>
+          <span className="text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</span>
         </div>
         <Badge color="emerald">Verified</Badge>
       </div>
       {deletable && (
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-[var(--color-border)]">
-          <button onClick={() => setIsShareOpen(true)} className="text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.04]">
+          <button onClick={() => setIsShareOpen(true)} className="text-white/40 hover:text-indigo-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-indigo-500/10">
             <Share2 size={14} /> Share
           </button>
-          <button onClick={() => { if (confirm("Delete card?")) deletePanCard(pan._id); }} className="text-[var(--color-text-faint)] hover:text-rose-500 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+          <button onClick={() => { if (confirm("Delete card?")) deletePanCard(pan._id); }} className="text-white/40 hover:text-rose-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-rose-500/10">
             <Trash2 size={14} /> Remove
           </button>
         </div>
@@ -310,36 +312,36 @@ const PanManagerPage = () => {
   );
 
   const tableEmpty = (msg) => (
-    <tr><td colSpan="5" className="py-20 text-center text-xs text-[var(--color-text-faint)]">{msg}</td></tr>
+    <tr><td colSpan="5" className="py-24 text-center text-[13px] font-medium text-white/40">{msg}</td></tr>
   );
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-full p-4 md:p-8 transition-colors duration-300">
+    <div className="bg-transparent min-h-full flex flex-col transition-colors duration-300">
 
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center px-6 md:px-10 py-8 border-b border-white/[0.04]">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-base)]">PAN Manager</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 tracking-tight">
+          <h1 className="text-[24px] font-black text-white tracking-tight">PAN Manager</h1>
+          <p className="text-[13px] font-medium text-white/40 mt-1 uppercase tracking-wider">
             {tab === "mine"
               ? `Verified Cards: ${panCards.length}`
               : `Shared with you: ${sharedPanCount} PAN${sharedPanCount !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {tab === "mine" && (
             <>
               <button
                 onClick={() => setIsShareOpen(true)}
-                className="flex items-center gap-1.5 border border-indigo-500/40 text-indigo-400 text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-500/10 transition-all"
+                className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 h-[40px]"
               >
-                <Share2 size={15} /> Share PAN
+                <Share2 size={16} /> Share
               </button>
               <button
                 onClick={() => setIsAddOpen(true)}
-                className="flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all shadow-sm"
+                className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] h-[40px]"
               >
-                <Plus size={16} /> Add PAN Card
+                <Plus size={16} /> Add
               </button>
             </>
           )}
@@ -347,13 +349,15 @@ const PanManagerPage = () => {
       </div>
 
       {/* ── TABS ────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-6">
-        <Tab active={tab === "mine"} onClick={() => { setTab("mine"); setSearchQuery(""); }}>
-          My PANs
-        </Tab>
-        <Tab active={tab === "shared"} onClick={() => { setTab("shared"); setSearchQuery(""); }} badge={sharedPanCount}>
-          Shared PANs
-        </Tab>
+      <div className="px-6 md:px-10 py-6">
+        <div className="flex bg-white/[0.02] border border-white/[0.04] p-1 rounded-[14px] w-fit">
+          <Tab active={tab === "mine"} onClick={() => { setTab("mine"); setSearchQuery(""); }}>
+            My PANs
+          </Tab>
+          <Tab active={tab === "shared"} onClick={() => { setTab("shared"); setSearchQuery(""); }} badge={sharedPanCount}>
+            Shared PANs
+          </Tab>
+        </div>
       </div>
 
       {/* ── MY PANs TAB ─────────────────────────────────────────────────── */}
@@ -361,45 +365,47 @@ const PanManagerPage = () => {
         <>
           <OutgoingShares shares={outgoingShares} revokeShare={revokeShare} />
 
-          <div className="relative mb-6">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+          <div className="px-6 md:px-10 pb-6 relative">
+            <Search size={16} className="absolute left-10 top-1/2 -translate-y-1/2 -mt-3 text-white/30 pointer-events-none" />
             <input
               type="text"
               placeholder="Search by PAN or Name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] py-2.5 pl-10 pr-4 text-sm text-[var(--color-text-base)] rounded-xl focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-[var(--color-text-faint)]"
+              className="w-full bg-white/[0.02] border border-white/[0.06] rounded-[14px] py-3 pl-12 pr-4 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
             />
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
-            <table className="w-full border-collapse min-w-[700px]">
-              <thead>
-                <tr className="border-b border-[var(--color-border)]">
-                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-12">#</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">PAN Number</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Account Holder</th>
-                  <th className="px-6 py-4 text-center text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-24">Status</th>
-                  <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-32">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
-                {loading && filteredMine.length === 0
-                  ? tableEmpty("Synchronizing data...")
-                  : filteredMine.length === 0
-                  ? tableEmpty("No identifiers found.")
-                  : filteredMine.map((pan, i) => renderDesktopRow(pan, i, true))}
-              </tbody>
-            </table>
+          <div className="hidden md:block px-6 md:px-10 pb-10">
+            <div className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+              <table className="w-full border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+                    <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
+                    <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">PAN Number</th>
+                    <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Account Holder</th>
+                    <th className="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white/40 w-24">Status</th>
+                    <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40 w-32">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {loading && filteredMine.length === 0
+                    ? tableEmpty("Synchronizing data...")
+                    : filteredMine.length === 0
+                    ? tableEmpty("No identifiers found.")
+                    : filteredMine.map((pan, i) => renderDesktopRow(pan, i, true))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden flex flex-col gap-4">
+          <div className="md:hidden flex flex-col gap-4 px-6 pb-10">
             {loading && filteredMine.length === 0 ? (
-              <div className="py-20 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl">Loading...</div>
+              <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">Loading...</div>
             ) : filteredMine.length === 0 ? (
-              <div className="py-20 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl">No identifiers found.</div>
+              <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">No identifiers found.</div>
             ) : filteredMine.map((pan) => renderMobileCard(pan, true))}
           </div>
         </>
@@ -409,39 +415,39 @@ const PanManagerPage = () => {
       {tab === "shared" && (
         <>
           {Object.keys(sharedGroups).length === 0 ? (
-            <div className="py-24 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl">
+            <div className="mx-6 md:mx-10 py-24 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
               No one has shared PANs with you yet.
             </div>
           ) : (
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8 px-6 md:px-10 pb-10">
               {Object.values(sharedGroups).map(({ user, pans }) => {
                 const firstName = user?.name?.split(" ")[0] || "Unknown";
                 return (
-                  <div key={user?._id} className="flex flex-col gap-3">
+                  <div key={user?._id} className="flex flex-col gap-4">
                     {/* Group header */}
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xs font-black">
+                      <div className="w-10 h-10 rounded-[12px] bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-[14px] font-black border border-indigo-500/20">
                         {firstName[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--color-text-base)]">{firstName}&apos;s PANs</p>
-                        <p className="text-[10px] text-[var(--color-text-faint)]">{user?.email}</p>
+                        <p className="text-[14px] font-bold text-white/90">{firstName}&apos;s PANs</p>
+                        <p className="text-[11px] text-white/40 font-medium">{user?.email}</p>
                       </div>
                     </div>
 
                     {/* Desktop table for this group */}
-                    <div className="hidden md:block bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm">
+                    <div className="hidden md:block bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
                       <table className="w-full border-collapse">
                         <thead>
-                          <tr className="border-b border-[var(--color-border)]">
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-12">#</th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">PAN Number</th>
-                            <th className="px-6 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Holder Name</th>
-                            <th className="px-6 py-3 text-center text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Status</th>
-                            <th className="px-6 py-3 w-16" />
+                          <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+                            <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
+                            <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">PAN Number</th>
+                            <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Holder Name</th>
+                            <th className="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white/40">Status</th>
+                            <th className="px-6 py-4 w-16" />
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-[var(--color-border)]">
+                        <tbody className="divide-y divide-white/[0.04]">
                           {pans.map((pan, i) => renderDesktopRow(pan, i, false))}
                         </tbody>
                       </table>

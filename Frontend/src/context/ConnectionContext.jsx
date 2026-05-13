@@ -25,12 +25,11 @@ export const ConnectionProvider = ({ children }) => {
         name,
         mobile,
       });
-      console.log(response.data);
+      console.log(response);
       setShowModal(false);
       getConnections();
     } catch (err) {
-      setError(error.response.data.message || "something went wrong");
-      setLoading(false);
+      setError(err.message || "something went wrong");
     } finally {
       setLoading(false);
     }
@@ -42,9 +41,9 @@ export const ConnectionProvider = ({ children }) => {
       const response = await axiosInstance.get("/api/connections/get");
       console.log("full response:", response);
       setConnections(response.connections);
-      setLoading(false);
     } catch (error) {
-      setError(error.response.data.message);
+      setError(error.message || "Failed to fetch connections");
+    } finally {
       setLoading(false);
     }
   };
@@ -56,9 +55,9 @@ export const ConnectionProvider = ({ children }) => {
         `/api/connections/delete/${connectionid}`,
       );
       getConnections();
-      setLoading(false);
     } catch (error) {
-      setError(error.response.data.message);
+      setError(error.message || "Failed to delete connection");
+    } finally {
       setLoading(false);
     }
   };
@@ -72,11 +71,11 @@ export const ConnectionProvider = ({ children }) => {
       );
       setShowEditModal(false);
       getConnections();
-      setLoading(false);
     } catch (error) {
-      setError(error.response.data.message);
-      setLoading(false);
+      setError(error.message || "Failed to edit connection");
       setShowEditModal(false);
+    } finally {
+      setLoading(false);
     }
   };
 

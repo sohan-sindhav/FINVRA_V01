@@ -71,27 +71,28 @@ const TransactionsPage = () => {
   );
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-full flex flex-col transition-colors duration-300 p-4 md:p-8">
+    <div className="bg-transparent min-h-full flex flex-col transition-colors duration-300">
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center px-6 md:px-10 py-8 border-b border-white/[0.04]">
         <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-base)]">Transactions</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1 tracking-tight">
+          <h1 className="text-[24px] font-black text-white tracking-tight">Transactions</h1>
+          <p className="text-[13px] font-medium text-white/40 mt-1 uppercase tracking-wider">
              Ledger: {active.length} active · {reversed.length} archived
           </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all shadow-sm"
+          className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
         >
-          <Plus size={16} /> Add Transaction
+          <Plus size={16} /> Add
         </button>
       </div>
 
       {/* TABS & SEARCH */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-         <div className="flex bg-[var(--color-bg-card)] border border-[var(--color-border)] p-1 rounded-xl">
+      {/* TABS & SEARCH */}
+      <div className="px-6 md:px-10 py-6 flex flex-col md:flex-row gap-4">
+         <div className="flex bg-white/[0.02] border border-white/[0.04] p-1 rounded-[14px]">
             {[
               { key: "active",   label: "Active",   count: active.length },
               { key: "reversed", label: "Archive", count: reversed.length },
@@ -99,14 +100,14 @@ const TransactionsPage = () => {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-6 py-2 text-xs font-medium transition-all rounded-lg ${
+                className={`flex items-center gap-2 px-6 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-all rounded-[10px] ${
                   activeTab === key
-                    ? "bg-[var(--color-bg-page)] text-indigo-500 shadow-sm"
-                    : "text-[var(--color-text-faint)] hover:text-[var(--color-text-base)]"
+                    ? "bg-white/[0.06] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/80 hover:bg-white/[0.02]"
                 }`}
               >
                 {label}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === key ? "bg-indigo-500/10 text-indigo-500" : "bg-[var(--color-bg-page)] border border-[var(--color-border)] text-[var(--color-text-faint)]"}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${activeTab === key ? "bg-indigo-500 text-white" : "bg-white/[0.05] text-white/40"}`}>
                   {count}
                 </span>
               </button>
@@ -114,13 +115,13 @@ const TransactionsPage = () => {
          </div>
 
          <div className="relative flex-1 group">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
             <input 
               type="text"
               placeholder="Search by entity..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] py-2.5 pl-10 pr-4 text-sm text-[var(--color-text-base)] rounded-xl focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-[var(--color-text-faint)]"
+              className="w-full h-full bg-white/[0.02] border border-white/[0.06] rounded-[14px] py-3 pl-11 pr-4 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
             />
          </div>
       </div>
@@ -134,85 +135,88 @@ const TransactionsPage = () => {
       )}
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
-      <div className="hidden md:block bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden overflow-x-auto shadow-sm">
-        <table className="w-full border-collapse min-w-[700px]">
-           <thead>
-              <tr className="border-b border-[var(--color-border)]">
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-12">#</th>
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">From</th>
-                 <th className="px-6 py-4 text-left text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">To</th>
-                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)]">Amount</th>
-                 <th className="px-6 py-4 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-faint)] w-32">Actions</th>
-              </tr>
-           </thead>
-           <tbody className="divide-y divide-[var(--color-border)]">
-              {filtered.length === 0 ? (
-                <tr>
-                   <td colSpan="5" className="py-20 text-center text-xs text-[var(--color-text-faint)]">No transactions found.</td>
+      {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
+      <div className="hidden md:block px-6 md:px-10 pb-10">
+        <div className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
+          <table className="w-full border-collapse min-w-[700px]">
+             <thead>
+                <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">From</th>
+                   <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">To</th>
+                   <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40">Amount</th>
+                   <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40 w-32">Actions</th>
                 </tr>
-              ) : (
-                filtered.map((t, i) => (
-                  <tr key={t._id} className="hover:bg-[var(--color-bg-page)]/50 transition-colors group">
-                    <td className="px-6 py-4 text-xs text-[var(--color-text-faint)]">{i + 1}</td>
-                    <td className="px-6 py-4">
-                       <span className="text-sm font-medium text-[var(--color-text-base)]">{t.from?.name || "—"}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                       <span className="text-xs text-[var(--color-text-muted)]">{t.to?.nickname || "—"}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <span className={`text-sm font-semibold ${t.reversed ? "text-[var(--color-text-faint)] line-through" : "text-emerald-500"}`}>
-                          ₹{Number(t.amount).toLocaleString("en-IN")}
-                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {activeTab === "active" && (
-                            <button onClick={() => { if(confirm("Reverse transaction?")) handleReverse(t); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-amber-500 transition-colors" title="Reverse"><RotateCcw size={14} /></button>
-                          )}
-                          <button onClick={async () => {
-                             if(!confirm("Delete transaction?")) return;
-                             const result = await updateBalance({ balance: -Number(t.amount) }, t.to?._id);
-                             if (!result.success) { setActionError(result.error); return; }
-                             await deleteTransaction(t._id);
-                             await getBankAcc();
-                          }} className="p-1.5 text-[var(--color-text-faint)] hover:text-rose-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
-                       </div>
-                    </td>
+             </thead>
+             <tbody className="divide-y divide-white/[0.04]">
+                {filtered.length === 0 ? (
+                  <tr>
+                     <td colSpan="5" className="py-24 text-center text-[13px] font-medium text-white/40">No transactions found.</td>
                   </tr>
-                ))
-              )}
-           </tbody>
-        </table>
+                ) : (
+                  filtered.map((t, i) => (
+                    <tr key={t._id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
+                      <td className="px-6 py-4">
+                         <span className="text-[14px] font-semibold text-white/90">{t.from?.name || "—"}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                         <span className="text-[13px] font-medium text-white/50">{t.to?.nickname || "—"}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right tabular-nums">
+                         <span className={`text-[14px] font-bold ${t.reversed ? "text-white/30 line-through" : "text-emerald-400"}`}>
+                            ₹{Number(t.amount).toLocaleString("en-IN")}
+                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {activeTab === "active" && (
+                              <button onClick={() => { if(confirm("Reverse transaction?")) handleReverse(t); }} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-amber-500/10 hover:text-amber-400 border border-transparent hover:border-amber-500/20 transition-all" title="Reverse"><RotateCcw size={14} /></button>
+                            )}
+                            <button onClick={async () => {
+                               if(!confirm("Delete transaction?")) return;
+                               const result = await updateBalance({ balance: -Number(t.amount) }, t.to?._id);
+                               if (!result.success) { setActionError(result.error); return; }
+                               await deleteTransaction(t._id);
+                               await getBankAcc();
+                            }} className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all" title="Delete"><Trash2 size={14} /></button>
+                         </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+             </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── MOBILE CARDS ──────────────────────────────────────── */}
-      <div className="md:hidden flex flex-col gap-4">
+      <div className="md:hidden flex flex-col gap-4 px-6 pb-10">
         {filtered.length === 0 ? (
-          <div className="py-20 text-center text-xs text-[var(--color-text-faint)] bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl shadow-sm">No transactions found.</div>
+          <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">No transactions found.</div>
         ) : (
           filtered.map((t, i) => (
-            <div key={t._id} className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+            <div key={t._id} className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] p-5 flex flex-col gap-4 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
               <div className="flex justify-between items-start gap-4">
-                <div className="flex flex-col gap-2 flex-1">
-                   <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-[var(--color-text-faint)] uppercase tracking-wider w-8">From</span>
-                      <span className="text-sm font-medium text-[var(--color-text-base)] truncate">{t.from?.name || "—"}</span>
+                <div className="flex flex-col gap-3 flex-1">
+                   <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest w-8">From</span>
+                      <span className="text-[14px] font-semibold text-white/90 truncate">{t.from?.name || "—"}</span>
                    </div>
-                   <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-[var(--color-text-faint)] uppercase tracking-wider w-8">To</span>
-                      <span className="text-xs text-[var(--color-text-muted)] truncate">{t.to?.nickname || "—"}</span>
+                   <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest w-8">To</span>
+                      <span className="text-[13px] font-medium text-white/50 truncate">{t.to?.nickname || "—"}</span>
                    </div>
                 </div>
-                <div className="text-right">
-                  <span className={`text-base font-semibold ${t.reversed ? "text-[var(--color-text-faint)] line-through" : "text-emerald-500"}`}>
+                <div className="text-right tabular-nums">
+                  <span className={`text-[16px] font-bold ${t.reversed ? "text-white/30 line-through" : "text-emerald-400"}`}>
                      ₹{Number(t.amount).toLocaleString("en-IN")}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-5 pt-4 border-t border-[var(--color-border)] mt-1">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.04] mt-1">
                  {activeTab === "active" && (
-                   <button onClick={() => { if(confirm("Reverse transaction?")) handleReverse(t); }} className="text-[var(--color-text-faint)] hover:text-amber-500 transition-colors flex items-center gap-1.5 text-xs font-semibold"><RotateCcw size={14} /> Reverse</button>
+                   <button onClick={() => { if(confirm("Reverse transaction?")) handleReverse(t); }} className="text-white/40 hover:text-amber-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-amber-500/10"><RotateCcw size={14} /> Reverse</button>
                  )}
                  <button onClick={async () => {
                    if(!confirm("Delete transaction?")) return;
@@ -220,7 +224,7 @@ const TransactionsPage = () => {
                    if (!result.success) { setActionError(result.error); return; }
                    await deleteTransaction(t._id);
                    await getBankAcc();
-                 }} className="text-[var(--color-text-faint)] hover:text-rose-500 transition-colors flex items-center gap-1.5 text-xs font-semibold"><Trash2 size={14} /> Delete</button>
+                 }} className="text-white/40 hover:text-rose-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-rose-500/10"><Trash2 size={14} /> Delete</button>
               </div>
             </div>
           ))

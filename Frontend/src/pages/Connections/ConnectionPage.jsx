@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
+import { motion } from "framer-motion";
 import { useConnections } from "../../context/ConnectionContext.jsx";
 import ConnectionCard from "./ConnectionCard.jsx";
 import Modal, {
@@ -47,35 +48,35 @@ const ConnectionPage = () => {
   );
 
   return (
-    <div className="bg-[#141414] min-h-full flex flex-col">
+    <div className="bg-transparent min-h-full flex flex-col transition-colors duration-300">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center px-4 md:px-7 py-5 border-b border-gray-800">
+      <div className="flex justify-between items-center px-6 md:px-10 py-8 border-b border-white/[0.04]">
         <div>
-          <h1 className="text-xl font-bold text-white">Connections</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h1 className="text-[24px] font-black text-white tracking-tight">Connections</h1>
+          <p className="text-[13px] font-medium text-white/40 mt-1 uppercase tracking-wider">
             {connections.length} contact{connections.length !== 1 ? "s" : ""}
           </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 bg-white text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+          className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
         >
-          <Plus size={15} /> Add
+          <Plus size={16} /> Add
         </button>
       </div>
 
       {/* SEARCH */}
       {connections.length > 0 && (
-        <div className="px-4 md:px-7 py-4">
-          <div className="relative max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+        <div className="px-6 md:px-10 py-6">
+          <div className="relative max-w-sm">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search…"
+              placeholder="Search contacts…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className={`${modalInputCls} pl-9`}
+              className="w-full bg-white/[0.02] border border-white/[0.06] rounded-[12px] py-3 pl-11 pr-4 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
             />
           </div>
         </div>
@@ -84,43 +85,59 @@ const ConnectionPage = () => {
       {/* LOADING */}
       {Loading && connections.length === 0 && (
         <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-border)] border-t-indigo-500 rounded-full animate-spin" />
         </div>
       )}
 
       {/* EMPTY STATE */}
       {!Loading && connections.length === 0 && (
-        <div className="flex flex-col items-center justify-center flex-1 gap-3 py-24 text-gray-500">
-          <div className="w-14 h-14 rounded-xl border border-gray-800 bg-[#1f1f1f] flex items-center justify-center">
-            <Plus size={24} className="opacity-30" />
+        <div className="flex flex-col items-center justify-center flex-1 gap-4 py-24 text-white/40">
+          <div className="w-16 h-16 rounded-[16px] border border-white/[0.04] bg-white/[0.02] flex items-center justify-center shadow-sm">
+            <Users size={28} className="opacity-40" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-white text-sm mb-1">No connections yet</p>
-            <p className="text-xs">Add your first contact to get started</p>
+            <p className="font-semibold text-white/90 text-base mb-1.5">No connections yet</p>
+            <p className="text-[13px]">Add your first contact to get started</p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-white text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-100 transition-colors mt-1"
+            className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white transition-colors duration-300 mt-2 border border-indigo-500/20 hover:border-indigo-500"
           >
-            <Plus size={14} /> Add Connection
+            <Plus size={16} /> Add Connection
           </button>
         </div>
       )}
 
       {/* LIST */}
       {filtered.length > 0 && (
-        <div className="px-4 md:px-7 py-4">
-          <div className="border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800/60">
+        <div className="px-6 md:px-10 pb-10">
+          <motion.div 
+            initial="hidden" 
+            animate="visible" 
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+            }}
+            className="border border-white/[0.04] rounded-[16px] overflow-hidden bg-[#111827]/50 backdrop-blur-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]"
+          >
             {filtered.map((c, i) => (
-              <ConnectionCard key={c._id} connection={c} index={i + 1} />
+              <motion.div 
+                key={c._id} 
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+                }}
+              >
+                <ConnectionCard connection={c} index={i} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       )}
 
       {/* NO SEARCH RESULTS */}
       {connections.length > 0 && filtered.length === 0 && (
-        <p className="text-center text-sm text-gray-600 py-20">
+        <p className="text-center text-[13px] font-medium text-white/40 py-20">
           No connections matching "{search}"
         </p>
       )}

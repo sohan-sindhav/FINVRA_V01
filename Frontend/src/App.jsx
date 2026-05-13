@@ -47,10 +47,10 @@ const App = () => {
   }, []);
 
   return (
-    <div className="font-exo flex flex-col h-screen overflow-hidden bg-[#080808]">
-      <Navbar />
-      <div className="flex flex-1 min-h-0">
-        <Sidebar />
+    <div className="font-exo flex h-screen overflow-hidden bg-[#0A0E17]">
+      <Sidebar />
+      <div className="flex flex-col flex-1 min-w-0">
+        <Navbar />
         <div className="flex-1 min-h-0 overflow-y-auto pb-24 md:pb-0">
           <Routes>
             <Route
