@@ -64,12 +64,17 @@ export const BankAccProvider = ({ children }) => {
     }
   };
 
-  const sendMoney = async (fromId, { toId, amount }) => {
+  const sendMoney = async (fromId, { toId, amount, force = false }) => {
     try {
-      await axiosInstance.post(`/api/bank/account/sendMoney/${fromId}`, {
+      const res = await axiosInstance.post(`/api/bank/account/sendMoney/${fromId}`, {
         toId,
         amount,
+        force,
       });
+      // Backend returned a minimum-balance warning — surface it to the UI
+      if (res?.warning) {
+        return { success: false, warning: true, warningMessage: res.message };
+      }
       await createBankHistory(fromId, toId, amount);
       await getBankAcc();
       await getBankHistory();

@@ -132,7 +132,7 @@ export const deleteBankAcc = async (req, res) => {
 export const updateBalance = async (req, res) => {
   try {
     const { id } = req.params;
-    const { balance } = req.body; // positive = add, negative = deduct
+    const { balance } = req.body; // absolute new balance value
 
     const account = await BankAcc.findById(id);
     if (!account) {
@@ -140,21 +140,20 @@ export const updateBalance = async (req, res) => {
     }
 
     const floor = getFloor(account);
-    const newBalance = account.balance + balance;
 
-    // Prevent balance dropping below the minimum floor
-    if (newBalance < floor) {
+    // Prevent setting balance below the minimum floor
+    if (balance < floor) {
       const floorLabel = floor === 0
         ? "zero"
         : `₹${floor.toLocaleString("en-IN")}`;
       return res.status(400).json({
-        message: `Balance cannot go below the minimum balance (${floorLabel}) for "${account.nickname}". Available: ₹${(account.balance - floor).toLocaleString("en-IN")}`,
+        message: `Balance cannot be set below the minimum balance (${floorLabel}) for "${account.nickname}".`,
       });
     }
 
     const updatedAccount = await BankAcc.findByIdAndUpdate(
       id,
-      { $inc: { balance: balance } },
+      { $set: { balance: balance } },
       { new: true },
     );
 
@@ -167,7 +166,7 @@ export const updateBalance = async (req, res) => {
 export const sendMoney = async (req, res) => {
   try {
     const { fromId } = req.params;
-    const { toId, amount } = req.body;
+    const { toId, amount, force } = req.body;
 
     const fromBankAcc = await BankAcc.findById(fromId);
 
@@ -175,14 +174,19 @@ export const sendMoney = async (req, res) => {
       return res.status(404).json({ message: "Source account not found" });
     }
 
+    const newBalance = fromBankAcc.balance - amount;
     const floor = getFloor(fromBankAcc);
 
-    if (fromBankAcc.balance - amount < floor) {
+    // Warn if transfer would breach minimum balance — but allow with force flag
+    if (newBalance < floor && !force) {
       const floorLabel = floor === 0
         ? "zero"
         : `₹${floor.toLocaleString("en-IN")}`;
-      return res.status(400).json({
-        message: `Not enough balance in "${fromBankAcc.nickname}". Minimum balance must stay at ${floorLabel}. Available to send: ₹${Math.max(0, fromBankAcc.balance - floor).toLocaleString("en-IN")}`,
+      return res.status(200).json({
+        warning: true,
+        message: `This transfer will bring "${fromBankAcc.nickname}" below its minimum balance of ${floorLabel}. The balance after transfer would be ₹${newBalance.toLocaleString("en-IN")}. Do you want to proceed anyway?`,
+        newBalanceAfter: newBalance,
+        minimumBalance: floor,
       });
     }
 

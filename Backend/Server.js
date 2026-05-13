@@ -15,6 +15,7 @@ import ipoApplicationRoutes from "./routes/IPOApplication.routes.js";
 import roughNoteRoutes from "./routes/RoughNote.routes.js";
 
 const allowedOrigins = [
+  process.env.CLIENT_URL,
   "http://localhost:5173",
   "https://finvra-v01.vercel.app",
   "https://finvra.sohan.codes"

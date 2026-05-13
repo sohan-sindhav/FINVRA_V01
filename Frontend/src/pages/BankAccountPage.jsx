@@ -50,6 +50,7 @@ const BankAccountPage = () => {
   const [sendToId,      setSendToId]      = useState("");
   const [sendAmount,    setSendAmount]    = useState("");
   const [sendError,     setSendError]     = useState("");
+  const [sendWarning,   setSendWarning]   = useState(""); // min-balance warning text
   const [searchQuery,   setSearchQuery]   = useState("");
   const [isSubmitting,  setIsSubmitting]  = useState(false);
 
@@ -99,22 +100,28 @@ const BankAccountPage = () => {
 
   const handleResetBalance = async () => {
     setBalanceError("");
-    const result = await updateBalance({ balance: -selectedAcc.balance }, selectedAcc._id);
+    const result = await updateBalance({ balance: 0 }, selectedAcc._id);
     if (!result.success) { setBalanceError(result.error); return; }
     await getBankAcc();
     setNewBalance(""); setSelectedAcc(null);
   };
 
-  const handleSendMoney = async (e) => {
-    e.preventDefault();
+  const handleSendMoney = async (e, forceTransfer = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (isSubmitting) return;
     setSendError("");
+    setSendWarning("");
     setIsSubmitting(true);
     try {
-      const result = await sendMoney(sendFromAcc._id, { toId: sendToId, amount: Number(sendAmount) });
+      const result = await sendMoney(sendFromAcc._id, { toId: sendToId, amount: Number(sendAmount), force: forceTransfer });
+      if (result.warning) {
+        // Show warning in modal — user can then click "Transfer Anyway"
+        setSendWarning(result.warningMessage);
+        return;
+      }
       if (!result.success) { setSendError(result.error); return; }
       await getBankAcc();
-      setSendToId(""); setSendAmount("");
+      setSendToId(""); setSendAmount(""); setSendWarning("");
       setShowSendModal(false); setSendFromAcc(null);
     } finally {
       setIsSubmitting(false);
@@ -208,7 +215,17 @@ const BankAccountPage = () => {
                        </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <span className="text-sm font-semibold text-emerald-500">₹{Number(acc.balance || 0).toLocaleString("en-IN")}</span>
+                       {(() => {
+                         const isBelowMin = !acc.isZeroBalance && acc.minimumBalance > 0 && acc.balance < acc.minimumBalance;
+                         return (
+                           <span className={`text-sm font-semibold ${
+                             isBelowMin ? "text-amber-500" : "text-emerald-500"
+                           }`}>
+                             ₹{Number(acc.balance || 0).toLocaleString("en-IN")}
+                             {isBelowMin && <span className="ml-1 text-[10px]">⚠</span>}
+                           </span>
+                         );
+                       })()}
                     </td>
                     <td className="px-6 py-4 text-right">
                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -245,7 +262,17 @@ const BankAccountPage = () => {
                 </div>
                 <div className="text-right flex flex-col items-end">
                   <span className="text-[10px] items-center text-[var(--color-text-muted)] uppercase tracking-wider mb-1">Balance</span>
-                  <span className="text-base font-semibold text-emerald-500">₹{Number(acc.balance || 0).toLocaleString("en-IN")}</span>
+                  {(() => {
+                    const isBelowMin = !acc.isZeroBalance && acc.minimumBalance > 0 && acc.balance < acc.minimumBalance;
+                    return (
+                      <span className={`text-base font-semibold ${
+                        isBelowMin ? "text-amber-500" : "text-emerald-500"
+                      }`}>
+                        ₹{Number(acc.balance || 0).toLocaleString("en-IN")}
+                        {isBelowMin && <span className="ml-1 text-[10px]">⚠</span>}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="flex items-center justify-end gap-4 pt-4 border-t border-[var(--color-border)] mt-1">
@@ -262,9 +289,9 @@ const BankAccountPage = () => {
       <Modal open={!!selectedAcc} onClose={() => { setSelectedAcc(null); setBalanceError(""); }} title="Update Balance">
         {selectedAcc && (
           <form onSubmit={handleUpdateBalance} className="flex flex-col gap-4 p-1">
-            <ModalField label="New Balance Adjust (₹)">
+            <ModalField label="New Balance (₹)">
               <input type="number" value={newBalance} onChange={(e) => { setNewBalance(e.target.value); setBalanceError(""); }}
-                placeholder="e.g. 1000 or -500" className={modalInputCls} required />
+                placeholder={`Current: ₹${Number(selectedAcc.balance || 0).toLocaleString("en-IN")}`} className={modalInputCls} required min={0} />
             </ModalField>
             {selectedAcc.minimumBalance > 0 && !selectedAcc.isZeroBalance && (
               <p className="text-[11px] text-amber-500 -mt-2">
@@ -351,7 +378,7 @@ const BankAccountPage = () => {
         </form>
       </Modal>
 
-      <Modal open={showSendModal && !!sendFromAcc} onClose={() => { setShowSendModal(false); setSendError(""); }} title="Transfer Money">
+      <Modal open={showSendModal && !!sendFromAcc} onClose={() => { setShowSendModal(false); setSendError(""); setSendWarning(""); }} title="Transfer Money">
         {sendFromAcc && (
           <form onSubmit={handleSendMoney} className="flex flex-col gap-4 p-1">
             <ModalField label="To Account">
@@ -363,19 +390,46 @@ const BankAccountPage = () => {
               </select>
             </ModalField>
             <ModalField label="Amount">
-              <input type="number" value={sendAmount} onChange={(e) => { setSendAmount(e.target.value); setSendError(""); }}
+              <input type="number" value={sendAmount} onChange={(e) => { setSendAmount(e.target.value); setSendError(""); setSendWarning(""); }}
                 placeholder="0.00" className={modalInputCls} required />
             </ModalField>
-            {sendFromAcc.minimumBalance > 0 && !sendFromAcc.isZeroBalance && (
+            {sendFromAcc.minimumBalance > 0 && !sendFromAcc.isZeroBalance && !sendWarning && (
               <p className="text-[11px] text-amber-500 -mt-2">
-                ⚠ Min balance of ₹{Number(sendFromAcc.minimumBalance).toLocaleString("en-IN")} must remain in "{sendFromAcc.nickname}"
+                ⚠ Min balance of ₹{Number(sendFromAcc.minimumBalance).toLocaleString("en-IN")} must remain in &quot;{sendFromAcc.nickname}&quot;
               </p>
             )}
             {sendError && <p className="text-xs text-rose-500 mt-1">{sendError}</p>}
-            <ModalFooter>
-              <CancelBtn onClick={() => { setShowSendModal(false); setSendError(""); }} disabled={isSubmitting} />
-              <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Transferring..." : "Transfer"}</ConfirmBtn>
-            </ModalFooter>
+
+            {/* Minimum balance warning — shown after first attempt */}
+            {sendWarning && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col gap-2">
+                <p className="text-xs text-amber-400 leading-relaxed">⚠ {sendWarning}</p>
+                <div className="flex gap-2 justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSendWarning("")}
+                    className="text-[11px] px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-base)] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleSendMoney(null, true)}
+                    className="text-[11px] px-3 py-1.5 rounded-lg bg-amber-500 text-white font-medium hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Transferring..." : "Transfer Anyway"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!sendWarning && (
+              <ModalFooter>
+                <CancelBtn onClick={() => { setShowSendModal(false); setSendError(""); setSendWarning(""); }} disabled={isSubmitting} />
+                <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Transferring..." : "Transfer"}</ConfirmBtn>
+              </ModalFooter>
+            )}
           </form>
         )}
       </Modal>
