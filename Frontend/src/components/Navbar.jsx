@@ -6,21 +6,24 @@ import ThemeToggle from "./ThemePanel";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBankAccounts } from "../context/BankAccContext";
 import { usePan } from "../context/PanContext";
+import { useTransactions } from "../context/TransactionContext";
 
 const Navbar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { minBalanceWarnings } = useBankAccounts();
-  const { incomingRequests, respondToRequest } = usePan();
+  const { incomingRequests: panRequests, respondToRequest: respondToPan } = usePan();
+  const { incomingRequests: transactionRequests, respondToRequest: respondToTransaction } = useTransactions();
 
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef(null);
 
   const isProfile = location.pathname === "/profile";
   const minBalCount = minBalanceWarnings?.length ?? 0;
-  const panReqCount = incomingRequests?.length ?? 0;
-  const totalBadge = minBalCount + panReqCount;
+  const panReqCount = panRequests?.length ?? 0;
+  const transReqCount = transactionRequests?.length ?? 0;
+  const totalBadge = minBalCount + panReqCount + transReqCount;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -31,8 +34,11 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleRespond = async (id, action) => {
-    await respondToRequest(id, action);
+  const handleRespondPan = async (id, action) => {
+    await respondToPan(id, action);
+  };
+  const handleRespondTransaction = async (id, action) => {
+    await respondToTransaction(id, action);
   };
 
   const getPageTitle = () => {
@@ -116,8 +122,8 @@ const Navbar = () => {
                   ))}
 
                   {/* PAN share requests */}
-                  {incomingRequests.map((req) => (
-                    <div key={req._id} className="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                  {panRequests.map((req) => (
+                    <div key={`pan-${req._id}`} className="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
                       <div className="w-8 h-8 rounded-[8px] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
                         <span className="text-indigo-400 text-xs font-bold">P</span>
                       </div>
@@ -128,13 +134,42 @@ const Navbar = () => {
                         <p className="text-[11px] text-white/40 mt-0.5">{req.fromUser?.email}</p>
                         <div className="flex items-center gap-2 mt-3">
                           <button
-                            onClick={() => handleRespond(req._id, "accept")}
+                            onClick={() => handleRespondPan(req._id, "accept")}
                             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all"
                           >
                             <Check size={12} /> Accept
                           </button>
                           <button
-                            onClick={() => handleRespond(req._id, "decline")}
+                            onClick={() => handleRespondPan(req._id, "decline")}
+                            className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-white/[0.04] text-white/50 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 border border-white/[0.04] transition-all"
+                          >
+                            <X size={12} /> Decline
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Transaction share requests */}
+                  {transactionRequests.map((req) => (
+                    <div key={`txn-${req._id}`} className="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                      <div className="w-8 h-8 rounded-[8px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-emerald-400 text-xs font-bold">T</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-white/90 leading-snug">
+                          {req.fromUser?.name} wants to share Transactions
+                        </p>
+                        <p className="text-[11px] text-white/40 mt-0.5">{req.fromUser?.email}</p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            onClick={() => handleRespondTransaction(req._id, "accept")}
+                            className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all"
+                          >
+                            <Check size={12} /> Accept
+                          </button>
+                          <button
+                            onClick={() => handleRespondTransaction(req._id, "decline")}
                             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-white/[0.04] text-white/50 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 border border-white/[0.04] transition-all"
                           >
                             <X size={12} /> Decline

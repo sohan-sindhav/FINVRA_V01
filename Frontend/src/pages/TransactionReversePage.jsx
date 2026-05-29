@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 const TransactionReversePage = () => {
   const { transactions, reverseTransaction } = useTransactions();
-  const { updateBalance, getBankAcc } = useBankAccounts();
+  const { bankAccounts, updateBalance, getBankAcc } = useBankAccounts();
   const navigate = useNavigate();
 
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -20,8 +20,17 @@ const TransactionReversePage = () => {
     setReversing(true);
     setError("");
 
+    const targetBank = bankAccounts.find(b => b._id === selectedEntry.to?._id);
+    if (!targetBank) {
+      setError("Bank account not found");
+      setReversing(false);
+      return;
+    }
+
+    const newBalance = targetBank.balance - Number(selectedEntry.amount);
+
     // 1. Rollback the balance in the bank account (subtract what was added)
-    const result = await updateBalance({ balance: -Number(selectedEntry.amount) }, selectedEntry.to?._id);
+    const result = await updateBalance({ balance: newBalance }, selectedEntry.to?._id);
     
     if (!result.success) {
       setError(result.error || "Failed to adjust bank balance");

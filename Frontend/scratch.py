@@ -1,71 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { Plus, RotateCcw, ArrowRight, Trash2, Search, Share2, Check, X, Receipt } from "lucide-react";
-import { useTransactions } from "../context/TransactionContext";
-import { useConnections } from "../context/ConnectionContext";
-import { useBankAccounts } from "../context/BankAccContext";
-import Modal, {
-  ModalField,
-  ModalFooter,
-  CancelBtn,
-  ConfirmBtn,
-  modalSelectCls,
-  modalInputCls,
-} from "../components/Modal.jsx";
-import { useTheme } from "../theme/ThemeContext";
+import re
 
-const ShareModal = ({ open, onClose, onSubmit, isSubmitting, error }) => {
-  const [email, setEmail] = useState("");
-  useEffect(() => { if(open) setEmail(""); }, [open]);
-  return (
-    <Modal open={open} onClose={onClose} title="Share Transactions">
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit(email); }} className="p-1 flex flex-col gap-4">
-        {error && <p className="text-rose-400 text-xs">{error}</p>}
-        <ModalField label="Recipient Email">
-          <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className={modalInputCls} placeholder="email@example.com" />
-        </ModalField>
-        <ModalFooter>
-          <CancelBtn onClick={onClose} disabled={isSubmitting} />
-          <ConfirmBtn type="submit" disabled={isSubmitting}>{isSubmitting ? "Sending..." : "Share"}</ConfirmBtn>
-        </ModalFooter>
-      </form>
-    </Modal>
-  );
-};
+with open(r"d:\WINDOWS_LOCATIONS\Projects\Practice\Finvra01\Frontend\src\pages\TransactionsPage.jsx", "r", encoding="utf-8") as f:
+    content = f.read()
 
-const OutgoingShares = ({ shares, revokeShare }) => {
-  if (!shares || !shares.length) return null;
-  return (
-    <div className="px-6 md:px-10 pb-6">
-      <div className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] p-5">
-        <h3 className="text-[13px] font-bold text-white/50 uppercase tracking-widest mb-4">Outgoing Shares ({shares.length})</h3>
-        <div className="flex flex-col gap-3">
-          {shares.map(s => (
-            <div key={s._id} className="flex items-center justify-between bg-white/[0.02] p-3 rounded-xl border border-white/[0.04]">
-              <div>
-                <p className="text-sm font-semibold text-white/90">{s.toUser?.name} <span className="text-white/40 text-xs">({s.toUser?.email})</span></p>
-                <p className="text-xs text-indigo-400 mt-1">{s.transactions?.length} transactions shared • <span className="uppercase tracking-widest text-[10px]">{s.status}</span></p>
-              </div>
-              <button onClick={async () => {
-                if(!confirm("Revoke this share?")) return;
-                await revokeShare(s._id);
-              }} className="text-xs font-bold text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg hover:bg-rose-500/20 transition-colors">Revoke</button>
-            </div>
-          ))}
-        </div>
-      </div>
+# 1. New imports: Receipt text icon
+content = content.replace(
+    'import { Plus, RotateCcw, ArrowRight, Trash2, Search, Share2, Check, X } from "lucide-react";',
+    'import { Plus, RotateCcw, ArrowRight, Trash2, Search, Share2, Check, X, Receipt } from "lucide-react";'
+)
 
-    </div>
-  );
-};
-
-
+# 2. Add ReceiptModal Component
+receipt_modal_str = """
 const ReceiptModal = ({ open, onClose, shareRequest }) => {
   if (!shareRequest) return null;
   const totalAmount = shareRequest.transactions?.reduce((acc, t) => acc + Number(t.amount), 0) || 0;
   
   return (
-    <Modal open={open} onClose={onClose} title="Transaction Receipt" maxWidth="max-w-md">
-      <div className="p-4 flex flex-col gap-5 max-h-[75vh]">
+    <Modal open={open} onClose={onClose} title="Transaction Receipt">
+      <div className="p-4 flex flex-col gap-6">
         <div className="flex flex-col items-center gap-1 border-b border-white/[0.04] pb-6">
           <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2">
             <Receipt size={24} />
@@ -79,9 +31,9 @@ const ReceiptModal = ({ open, onClose, shareRequest }) => {
           </p>
         </div>
         
-        <div className="flex flex-col gap-3 flex-1 min-h-0">
-          <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1 shrink-0">Itemized Breakdown</h3>
-          <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl overflow-y-auto flex-1 min-h-0 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
+        <div className="flex flex-col gap-3">
+          <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Itemized Breakdown</h3>
+          <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl overflow-hidden">
             {shareRequest.transactions?.map((t, i) => (
               <div key={t._id} className="flex justify-between items-center p-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
                 <div className="flex flex-col">
@@ -98,14 +50,14 @@ const ReceiptModal = ({ open, onClose, shareRequest }) => {
           </div>
         </div>
 
-        <div className="shrink-0 flex justify-between items-center bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl mt-2">
+        <div className="flex justify-between items-center bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl mt-2">
           <span className="text-[13px] font-black text-indigo-400 uppercase tracking-wider">Total Amount</span>
           <span className="text-[18px] font-black text-white tabular-nums tracking-tight">
             ₹{totalAmount.toLocaleString("en-IN")}
           </span>
         </div>
         
-        <div className="shrink-0 flex justify-end mt-2">
+        <div className="flex justify-end mt-2">
           <button onClick={onClose} className="px-6 py-2.5 bg-white/[0.06] text-white text-[13px] font-bold uppercase tracking-wider rounded-[10px] hover:bg-white/[0.1] transition-colors">
             Close
           </button>
@@ -114,72 +66,19 @@ const ReceiptModal = ({ open, onClose, shareRequest }) => {
     </Modal>
   );
 };
+"""
+content = content.replace("const TransactionsPage = () => {", receipt_modal_str.strip() + "\n\nconst TransactionsPage = () => {")
 
-const TransactionsPage = () => {
-
-  const { transactions, createTransaction, deleteTransaction, reverseTransaction, sendShareRequest, sharedWithMe, outgoingShares, revokeShare } =
-    useTransactions();
-  const { connections, getConnections } = useConnections();
-  const { bankAccounts, updateBalance, getBankAcc } = useBankAccounts();
-  const { theme } = useTheme();
-
-  const [showModal,    setShowModal]   = useState(false);
-  const [activeTab,    setActiveTab]   = useState("active");
-  const [from,         setFrom]        = useState("");
-  const [to,           setTo]          = useState("");
-  const [amount,       setAmount]      = useState("");
-  const [actionError,  setActionError] = useState("");
-  const [searchQuery,  setSearchQuery] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+# 3. Add state for selectedReceipt
+state_str = """
   const [selectedTxns, setSelectedTxns] = useState([]);
   const [isShareOpen,  setIsShareOpen]  = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+"""
+content = re.sub(r'const \[selectedTxns, setSelectedTxns\] = useState\(\[\]\);\s*const \[isShareOpen,  setIsShareOpen\]  = useState\(false\);', state_str.strip(), content, flags=re.DOTALL)
 
-  const isLight = theme === "light";
-
-  useEffect(() => { getConnections(); }, []);
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const targetBank = bankAccounts.find(b => b._id === to);
-      const newBalance = (targetBank?.balance || 0) + Number(amount);
-
-      await createTransaction({ from, to, amount });
-      await updateBalance({ balance: newBalance }, to);
-      await getBankAcc();
-      setFrom(""); setTo(""); setAmount("");
-      setShowModal(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleReverse = async (t) => {
-    if (isSubmitting) return;
-    setActionError("");
-    setIsSubmitting(true);
-    try {
-      const targetBank = bankAccounts.find(b => b._id === t.to?._id);
-      if (!targetBank) { setActionError("Bank account not found"); return; }
-      const newBalance = targetBank.balance - Number(t.amount);
-
-      const result = await updateBalance({ balance: newBalance }, t.to?._id);
-      if (!result.success) { setActionError(result.error); return; }
-      await reverseTransaction(t._id);
-      await getBankAcc();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-
-  const handleToggleSelect = (id) => {
-    setSelectedTxns(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
-
+# 4. Modify sharedTxns and filtering logic
+shared_str = """
   const active   = transactions.filter((t) => !t.reversed);
   const reversed = transactions.filter((t) =>  t.reversed);
   
@@ -197,92 +96,15 @@ const TransactionsPage = () => {
     );
   };
   const filtered = getFiltered();
+"""
+content = re.sub(r'const active   = transactions\.filter\(\(t\) => !t\.reversed\);\n\n\s*const reversed = transactions\.filter\(\(t\) =>  t\.reversed\);\s*const sharedTxns =.*?const filtered = getFiltered\(\);', shared_str.strip(), content, flags=re.DOTALL)
 
-  return (
-    <div className="bg-transparent min-h-full flex flex-col transition-colors duration-300">
+# 5. Update Tab count for "Shared"
+content = content.replace('{ key: "shared",   label: "Shared",   count: sharedTxns.length },', '{ key: "shared",   label: "Shared",   count: (sharedWithMe || []).length },')
 
-      {/* ── HEADER ─────────────────────────────────────────────── */}
-      <div className="flex justify-between items-center px-6 md:px-10 py-8 border-b border-white/[0.04]">
-        <div>
-          <h1 className="text-[24px] font-black text-white tracking-tight">Transactions</h1>
-          <p className="text-[13px] font-medium text-white/40 mt-1 uppercase tracking-wider">
-             Ledger: {active.length} active · {reversed.length} archived
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {activeTab === "active" && selectedTxns.length > 0 && (
-            <button
-              onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all duration-300"
-            >
-              <Share2 size={16} /> Share ({selectedTxns.length})
-            </button>
-          )}
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[13px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-[12px] hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-[0_0_15px_rgba(99,102,241,0.1)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
-          >
-            <Plus size={16} /> Add
-          </button>
-        </div>
-      </div>
-
-      {/* TABS & SEARCH */}
-      {/* TABS & SEARCH */}
-      <div className="px-6 md:px-10 py-6 flex flex-col md:flex-row gap-4">
-         <div className="flex bg-white/[0.02] border border-white/[0.04] p-1 rounded-[14px]">
-{[
-              { key: "active",   label: "Active",   count: active.length },
-              { key: "reversed", label: "Archive", count: reversed.length },
-              { key: "shared",   label: "Shared",   count: (sharedWithMe || []).length },
-            ].map(({ key, label, count }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-6 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-all rounded-[10px] ${
-                  activeTab === key
-                    ? "bg-white/[0.06] text-white shadow-sm"
-                    : "text-white/40 hover:text-white/80 hover:bg-white/[0.02]"
-                }`}
-              >
-                {label}
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${activeTab === key ? "bg-indigo-500 text-white" : "bg-white/[0.05] text-white/40"}`}>
-                  {count}
-                </span>
-              </button>
-            ))}
-         </div>
-
-         <div className="relative flex-1 group">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-            <input 
-              type="text"
-              placeholder="Search by entity..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-full bg-white/[0.02] border border-white/[0.06] rounded-[14px] py-3 pl-11 pr-4 text-[14px] text-white placeholder:text-white/20 focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
-            />
-         </div>
-      </div>
-
-      {/* ERROR BANNER */}
-      {actionError && (
-        <div className="mb-4 text-rose-500 text-xs bg-rose-500/5 border border-rose-500/10 px-4 py-2.5 rounded-lg flex items-center justify-between">
-          <span>{actionError}</span>
-          <button onClick={() => setActionError("")}>&times;</button>
-        </div>
-      )}
-
-      {activeTab === "shared" && <OutgoingShares shares={outgoingShares} revokeShare={revokeShare} />}
-
-      {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
-
-      {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
-      <div className="hidden md:block px-6 md:px-10 pb-10">
-        <div className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] overflow-hidden shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
-          <table className="w-full border-collapse min-w-[700px]">
-             <thead>
-                <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+# 6. Change Desktop Table headers
+table_headers_str = """
+                 <tr className="border-b border-white/[0.04] bg-white/[0.02]">
                    {activeTab === "shared" ? (
                      <>
                        <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">From</th>
@@ -307,8 +129,12 @@ const TransactionsPage = () => {
                      </>
                    )}
                  </tr>
-             </thead>
-             <tbody className="divide-y divide-white/[0.04]">
+"""
+content = re.sub(r'<tr className="border-b border-white/\[0\.04\] bg-white/\[0\.02\]">.*?</tr>', table_headers_str.strip(), content, flags=re.DOTALL)
+
+# 7. Change Desktop Table Body
+table_body_str = """
+              <tbody className="divide-y divide-white/[0.04]">
                 {filtered.length === 0 ? (
                   <tr>
                      <td colSpan="5" className="py-24 text-center text-[13px] font-medium text-white/40">No records found.</td>
@@ -391,11 +217,11 @@ const TransactionsPage = () => {
                   })
                 )}
              </tbody>
-          </table>
-        </div>
-      </div>
+"""
+content = re.sub(r'<tbody className="divide-y divide-white/\[0\.04\]">.*?</tbody>', table_body_str.strip(), content, flags=re.DOTALL)
 
-      {/* ── MOBILE CARDS ──────────────────────────────────────── */}
+# 8. Change Mobile Cards
+mobile_body_str = """
       <div className="md:hidden flex flex-col gap-4 px-6 pb-10">
         {filtered.length === 0 ? (
           <div className="py-20 text-center text-[13px] font-medium text-white/40 bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">No records found.</div>
@@ -471,58 +297,13 @@ const TransactionsPage = () => {
           })
         )}
       </div>
+"""
+content = re.sub(r'<div className="md:hidden flex flex-col gap-4 px-6 pb-10">.*?(?=\{/\* ── ADD MODAL ── \*/\})', mobile_body_str.strip() + '\n\n      ', content, flags=re.DOTALL)
 
-      {/* ── ADD MODAL ── */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="New Transaction">
-        <form onSubmit={handleCreate} className="flex flex-col gap-4 p-1">
-          <ModalField label="From (Connection)">
-            <select value={from} onChange={(e) => setFrom(e.target.value)} className={modalSelectCls} required>
-              <option value="">Choose Payer</option>
-              {[...connections].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-          </ModalField>
-          <ModalField label="To (Bank Account)">
-            <select value={to} onChange={(e) => setTo(e.target.value)} className={modalSelectCls} required>
-              <option value="">Choose Receiver</option>
-              {[...bankAccounts].sort((a, b) => a.nickname.localeCompare(b.nickname)).map((b) => (
-                <option key={b._id} value={b._id}>{b.nickname}</option>
-              ))}
-            </select>
-          </ModalField>
-          <ModalField label="Amount (₹)">
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00" className={modalInputCls} required />
-          </ModalField>
-          <ModalFooter>
-            <CancelBtn onClick={() => setShowModal(false)} disabled={isSubmitting} />
-            <ConfirmBtn type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Processing..." : "Finalize"}
-            </ConfirmBtn>
-          </ModalFooter>
-        </form>
-      </Modal>
 
-      <ShareModal 
-        open={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
-        isSubmitting={isSubmitting}
-        error={actionError}
-        onSubmit={async (email) => {
-          setIsSubmitting(true);
-          setActionError("");
-          const res = await sendShareRequest({ recipientEmail: email, transactionIds: selectedTxns });
-          setIsSubmitting(false);
-          if (res.success) {
-            setIsShareOpen(false);
-            setSelectedTxns([]);
-          } else {
-            setActionError(res.message);
-          }
-        }}
-      />
-<ReceiptModal 
+# Add ReceiptModal renderer
+receipt_render_str = """
+      <ReceiptModal 
         open={!!selectedReceipt} 
         onClose={() => setSelectedReceipt(null)} 
         shareRequest={selectedReceipt} 
@@ -530,7 +311,10 @@ const TransactionsPage = () => {
     </div>
   );
 };
+"""
+content = content.replace("    </div>\n  );\n};", receipt_render_str.strip() + "\n")
 
+with open(r"d:\WINDOWS_LOCATIONS\Projects\Practice\Finvra01\Frontend\src\pages\TransactionsPage.jsx", "w", encoding="utf-8") as f:
+    f.write(content)
 
-
-export default TransactionsPage;
+print("done")
