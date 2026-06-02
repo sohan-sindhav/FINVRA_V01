@@ -1,4 +1,5 @@
 import IPOManager from "../models/IPOManager.models.js";
+import User from "../models/user.models.js";
 
 export const createIPO = async (req, res) => {
   try {
@@ -16,6 +17,28 @@ export const createIPO = async (req, res) => {
       minimum_retail_price: lot * priceband.max, // set explicitly since hook runs after model() not create()
     });
     await ipo.save();
+
+    // Auto-share with partners
+    const user = await User.findById(userId).populate("partners");
+    if (user && user.partners && user.partners.length > 0) {
+      for (const partner of user.partners) {
+        // Check if IPO with same companyname already exists for partner
+        const existingIPO = await IPOManager.findOne({ userId: partner._id, companyname });
+        if (!existingIPO) {
+          const partnerIpo = new IPOManager({
+            userId: partner._id,
+            companyname,
+            opendate,
+            closedate,
+            priceband,
+            lot,
+            minimum_retail_price: lot * priceband.max,
+          });
+          await partnerIpo.save();
+        }
+      }
+    }
+
     res.status(201).json({ success: true, ipo });
   } catch (error) {
     res.status(500).json({ message: error.message });

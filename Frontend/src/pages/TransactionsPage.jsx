@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Plus, RotateCcw, ArrowRight, Trash2, Search, Share2, Check, X, Receipt } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Plus, RotateCcw, ArrowRight, Trash2, Search, Share2, Check, X, Receipt, Download } from "lucide-react";
+import html2canvas from "html2canvas";
 import { useTransactions } from "../context/TransactionContext";
 import { useConnections } from "../context/ConnectionContext";
 import { useBankAccounts } from "../context/BankAccContext";
@@ -32,7 +33,7 @@ const ShareModal = ({ open, onClose, onSubmit, isSubmitting, error }) => {
   );
 };
 
-const OutgoingShares = ({ shares, revokeShare }) => {
+const OutgoingShares = ({ shares, revokeShare, onViewReceipt }) => {
   if (!shares || !shares.length) return null;
   return (
     <div className="px-6 md:px-10 pb-6">
@@ -45,10 +46,13 @@ const OutgoingShares = ({ shares, revokeShare }) => {
                 <p className="text-sm font-semibold text-white/90">{s.toUser?.name} <span className="text-white/40 text-xs">({s.toUser?.email})</span></p>
                 <p className="text-xs text-indigo-400 mt-1">{s.transactions?.length} transactions shared • <span className="uppercase tracking-widest text-[10px]">{s.status}</span></p>
               </div>
-              <button onClick={async () => {
-                if(!confirm("Revoke this share?")) return;
-                await revokeShare(s._id);
-              }} className="text-xs font-bold text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg hover:bg-rose-500/20 transition-colors">Revoke</button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => onViewReceipt(s)} className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg hover:bg-indigo-500/20 transition-colors">Receipt</button>
+                <button onClick={async () => {
+                  if(!confirm("Revoke this share?")) return;
+                  await revokeShare(s._id);
+                }} className="text-xs font-bold text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg hover:bg-rose-500/20 transition-colors">Revoke</button>
+              </div>
             </div>
           ))}
         </div>
@@ -60,8 +64,36 @@ const OutgoingShares = ({ shares, revokeShare }) => {
 
 
 const ReceiptModal = ({ open, onClose, shareRequest }) => {
+  const hiddenRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!shareRequest) return null;
   const totalAmount = shareRequest.transactions?.reduce((acc, t) => acc + Number(t.amount), 0) || 0;
+  
+  const isSender = !!shareRequest.toUser?.name;
+  const targetName = isSender ? shareRequest.toUser?.name : shareRequest.fromUser?.name || "Unknown";
+  const directionText = isSender ? "To:" : "From:";
+
+  const handleDownload = async () => {
+    if (!hiddenRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(hiddenRef.current, {
+        backgroundColor: "#111827",
+        scale: 2, // High resolution
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `Receipt_${targetName.replace(/\s+/g, '_')}_${new Date(shareRequest.createdAt).getTime()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Error generating receipt image:", err);
+      alert("Failed to download receipt.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   
   return (
     <Modal open={open} onClose={onClose} title="Transaction Receipt" maxWidth="max-w-md">
@@ -72,7 +104,7 @@ const ReceiptModal = ({ open, onClose, shareRequest }) => {
           </div>
           <h2 className="text-[20px] font-black text-white tracking-tight">Receipt</h2>
           <p className="text-[13px] font-medium text-white/40 uppercase tracking-wider">
-            From: {shareRequest.fromUser?.name}
+            {directionText} {targetName}
           </p>
           <p className="text-[11px] font-medium text-white/30">
             {new Date(shareRequest.createdAt).toLocaleString()}
@@ -105,10 +137,50 @@ const ReceiptModal = ({ open, onClose, shareRequest }) => {
           </span>
         </div>
         
-        <div className="shrink-0 flex justify-end mt-2">
-          <button onClick={onClose} className="px-6 py-2.5 bg-white/[0.06] text-white text-[13px] font-bold uppercase tracking-wider rounded-[10px] hover:bg-white/[0.1] transition-colors">
+        <div className="shrink-0 flex justify-end gap-3 mt-2">
+          <button onClick={onClose} className="px-5 py-2 text-white/40 text-[13px] font-bold uppercase tracking-wider rounded-[10px] hover:bg-white/[0.05] transition-colors">
             Close
           </button>
+          <button onClick={handleDownload} disabled={isDownloading} className="flex items-center gap-2 px-5 py-2 bg-indigo-500/10 text-indigo-400 text-[13px] font-bold uppercase tracking-wider rounded-[10px] hover:bg-indigo-500 hover:text-white border border-indigo-500/20 transition-all">
+            {isDownloading ? "Generating..." : <><Download size={14} /> Download</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Hidden layout for html2canvas to capture full height without scrollbars */}
+      <div className="fixed left-[-9999px] top-[-9999px]">
+        <div ref={hiddenRef} className="bg-[#111827] w-[450px] p-8 flex flex-col gap-6 text-white font-sans rounded-2xl border border-white/10">
+          <div className="flex flex-col items-center gap-2 border-b border-white/[0.08] pb-6">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2">
+              <Receipt size={28} />
+            </div>
+            <h2 className="text-[24px] font-black tracking-tight">Transaction Receipt</h2>
+            <p className="text-[14px] font-medium text-white/50 uppercase tracking-wider">{directionText} {targetName}</p>
+            <p className="text-[12px] font-medium text-white/30">{new Date(shareRequest.createdAt).toLocaleString()}</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1">Itemized Breakdown</h3>
+            <div className="flex flex-col border border-white/[0.08] rounded-xl overflow-hidden">
+              {shareRequest.transactions?.map((t, i) => (
+                <div key={t._id} className="flex justify-between items-center p-4 border-b border-white/[0.08] last:border-0 bg-white/[0.02]">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[14px] font-semibold text-white/90">{t.from?.name || "—"}</span>
+                    <span className="text-[12px] text-white/40 flex items-center gap-1">
+                      To <ArrowRight size={10} /> {t.to?.nickname || "—"}
+                    </span>
+                  </div>
+                  <span className="text-[14px] font-bold text-emerald-400 tabular-nums">₹{Number(t.amount).toLocaleString("en-IN")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-between items-center bg-indigo-500/10 border border-indigo-500/20 p-5 rounded-xl mt-4">
+            <span className="text-[14px] font-black text-indigo-400 uppercase tracking-wider">Total Amount</span>
+            <span className="text-[20px] font-black text-white tabular-nums tracking-tight">₹{totalAmount.toLocaleString("en-IN")}</span>
+          </div>
+          <div className="text-center text-[10px] text-white/20 uppercase tracking-widest mt-4">
+            Generated by Finvra
+          </div>
         </div>
       </div>
     </Modal>
@@ -273,7 +345,7 @@ const TransactionsPage = () => {
         </div>
       )}
 
-      {activeTab === "shared" && <OutgoingShares shares={outgoingShares} revokeShare={revokeShare} />}
+      {activeTab === "shared" && <OutgoingShares shares={outgoingShares} revokeShare={revokeShare} onViewReceipt={setSelectedReceipt} />}
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────── */}
 

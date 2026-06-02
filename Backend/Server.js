@@ -13,6 +13,7 @@ import ipoRoutes from "./routes/IPO.routes.js";
 import panCardRoutes from "./routes/panCard.routes.js";
 import ipoApplicationRoutes from "./routes/IPOApplication.routes.js";
 import roughNoteRoutes from "./routes/RoughNote.routes.js";
+import partnerRoutes from "./routes/partner.routes.js";
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -56,6 +57,7 @@ app.use("/api/ipo", ipoRoutes);
 app.use("/api/pan", panCardRoutes);
 app.use("/api/ipo/app", ipoApplicationRoutes);
 app.use("/api/rough-notes", roughNoteRoutes);
+app.use("/api/partners", partnerRoutes);
 
 //Server is running on port
 app.listen(PORT, () => {

@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, Bell, Check, X } from "lucide-react";
+import { User, Bell, Check, X, Users } from "lucide-react";
 import ThemeToggle from "./ThemePanel";
+import PartnerManagerModal from "./PartnerManagerModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBankAccounts } from "../context/BankAccContext";
 import { usePan } from "../context/PanContext";
@@ -17,6 +18,7 @@ const Navbar = () => {
   const { incomingRequests: transactionRequests, respondToRequest: respondToTransaction } = useTransactions();
 
   const [bellOpen, setBellOpen] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
   const bellRef = useRef(null);
 
   const isProfile = location.pathname === "/profile";
@@ -68,6 +70,15 @@ const Navbar = () => {
 
       {/* RIGHT: Actions */}
       <div className="flex items-center gap-5">
+
+        {/* ── Partners ── */}
+        <button
+          onClick={() => setShowPartnerModal(true)}
+          className="relative w-10 h-10 flex items-center justify-center rounded-[12px] bg-white/[0.02] border border-white/[0.04] text-white/50 hover:bg-white/[0.04] hover:text-white/90 hover:border-white/10 transition-all duration-300"
+          title="Partners"
+        >
+          <Users size={18} />
+        </button>
 
         {/* ── Notification Bell ── */}
         <div className="relative" ref={bellRef}>
@@ -219,6 +230,11 @@ const Navbar = () => {
           </button>
         )}
       </div>
+
+      <PartnerManagerModal 
+        open={showPartnerModal}
+        onClose={() => setShowPartnerModal(false)}
+      />
     </nav>
   );
 };

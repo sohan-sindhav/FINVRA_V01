@@ -45,6 +45,14 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "admin"],
     default: "user",
   },
+  partners: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
+  partnerRequests: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }],
 }, { 
   timestamps: true,
   toJSON: { getters: true },

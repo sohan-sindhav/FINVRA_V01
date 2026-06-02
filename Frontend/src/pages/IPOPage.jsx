@@ -94,12 +94,14 @@ const IPOPage = () => {
              Active Listings: {ipos.length}
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all shadow-sm"
-        >
-          <Plus size={16} /> Add IPO
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1.5 bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-indigo-600 transition-all shadow-sm"
+          >
+            <Plus size={16} /> Add IPO
+          </button>
+        </div>
       </div>
 
       {/* SEARCH BAR */}

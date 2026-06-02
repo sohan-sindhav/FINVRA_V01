@@ -187,13 +187,13 @@ const RoughNotesPage = () => {
                 <div className={`flex gap-3 bg-[var(--color-bg-page)] border-t border-[var(--color-border)] p-4 ${viewMode === 'list' ? 'border-t-0 border-l rounded-r-xl w-full sm:w-auto mt-4 sm:mt-0' : 'rounded-b-xl'}`}>
                    <button 
                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickAction({ open: true, person: p, type: "send" }); }}
-                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 text-emerald-500 rounded-lg text-sm font-medium hover:bg-emerald-500 hover:text-white transition-all"
+                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-rose-500/10 text-rose-500 rounded-lg text-sm font-medium hover:bg-rose-500 hover:text-white transition-all"
                    >
                       Sent
                    </button>
                    <button 
                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickAction({ open: true, person: p, type: "receive" }); }}
-                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-rose-500/10 text-rose-500 rounded-lg text-sm font-medium hover:bg-rose-500 hover:text-white transition-all"
+                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500/10 text-emerald-500 rounded-lg text-sm font-medium hover:bg-emerald-500 hover:text-white transition-all"
                    >
                       Rcvd
                    </button>
@@ -295,7 +295,7 @@ const RoughNotesPage = () => {
             <ModalFooter>
                <CancelBtn onClick={() => setQuickAction({ ...quickAction, open: false })} disabled={isSubmitting} />
                <ConfirmBtn 
-                 className={quickAction.type === 'send' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600'} 
+                 className={quickAction.type === 'send' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'} 
                  disabled={isSubmitting}
                >
                  {isSubmitting ? <Loader2 size={16} className="animate-spin inline" /> : 'Confirm Entry'}

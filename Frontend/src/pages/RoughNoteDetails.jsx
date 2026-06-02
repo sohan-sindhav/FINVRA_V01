@@ -42,6 +42,9 @@ const RoughNoteDetails = () => {
   const [personNotes, setPersonNotes] = useState("");
   const [saveStatus, setSaveStatus] = useState("idle");
 
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [showEntryDetails, setShowEntryDetails] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
     const h = await getHistory(personId);
@@ -265,14 +268,14 @@ const RoughNoteDetails = () => {
 
                               <div className="flex flex-col divide-y divide-[var(--color-border)]">
                                  {items.map((item) => (
-                                    <div key={item._id} className="grid grid-cols-1 md:grid-cols-12 gap-0 items-center hover:bg-[var(--color-bg-page)] transition-colors group">
+                                     <div key={item._id} onClick={() => { setSelectedEntry(item); setShowEntryDetails(true); }} className="grid grid-cols-1 md:grid-cols-12 gap-0 items-center hover:bg-[var(--color-bg-page)] transition-colors group cursor-pointer">
                                        <div className="md:col-span-2 p-4 flex flex-col items-center justify-center text-center">
                                           <span className="text-[11px] font-semibold text-[var(--color-text-base)]">
                                              {new Date(item.date).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
                                           </span>
-                                          <div className="md:hidden mt-2 p-2 rounded-lg bg-rose-500/10 text-rose-500" onClick={() => handleDeleteEntry(item._id)}>
-                                             <Trash2 size={14} />
-                                          </div>
+                                           <div className="md:hidden mt-2 p-2 rounded-lg bg-rose-500/10 text-rose-500" onClick={(e) => { e.stopPropagation(); handleDeleteEntry(item._id); }}>
+                                              <Trash2 size={14} />
+                                           </div>
                                        </div>
                                        
                                        {/* RECEIVED COLUMN */}
@@ -280,9 +283,9 @@ const RoughNoteDetails = () => {
                                           {item.type === 'receive' && (
                                              <div className="flex flex-col items-center w-full">
                                                 <span className="text-[11px] font-medium text-[var(--color-text-muted)] mb-1">{item.description || "Received"}</span>
-                                                <span className="text-lg font-bold text-rose-500">₹{item.amount.toLocaleString("en-IN")}</span>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                   <span className="text-[9px] font-bold text-rose-500 px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">{item.category}</span>
+                                                 <span className="text-lg font-bold text-emerald-500">₹{item.amount.toLocaleString("en-IN")}</span>
+                                                 <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-[9px] font-bold text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">{item.category}</span>
                                                    {item.notes && (
                                                       <span className="text-[9px] text-[var(--color-text-faint)] italic max-w-[120px] truncate" title={item.notes}>笔记</span>
                                                    )}
@@ -296,9 +299,9 @@ const RoughNoteDetails = () => {
                                           {item.type === 'send' && (
                                              <div className="flex flex-col items-center w-full">
                                                 <span className="text-[11px] font-medium text-[var(--color-text-muted)] mb-1">{item.description || "Sent"}</span>
-                                                <span className="text-lg font-bold text-emerald-500">₹{item.amount.toLocaleString("en-IN")}</span>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                   <span className="text-[9px] font-bold text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">{item.category}</span>
+                                                 <span className="text-lg font-bold text-rose-500">₹{item.amount.toLocaleString("en-IN")}</span>
+                                                 <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-[9px] font-bold text-rose-500 px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">{item.category}</span>
                                                    {item.notes && (
                                                       <span className="text-[9px] text-[var(--color-text-faint)] italic max-w-[120px] truncate" title={item.notes}>笔记</span>
                                                    )}
@@ -308,10 +311,10 @@ const RoughNoteDetails = () => {
                                        </div>
 
                                        <div className="md:col-span-2 p-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <button 
-                                            onClick={() => handleDeleteEntry(item._id)}
-                                            className="p-2.5 rounded-full text-[var(--color-text-faint)] hover:text-rose-500 hover:bg-rose-500/10"
-                                          >
+                                           <button 
+                                             onClick={(e) => { e.stopPropagation(); handleDeleteEntry(item._id); }}
+                                             className="p-2.5 rounded-full text-[var(--color-text-faint)] hover:text-rose-500 hover:bg-rose-500/10"
+                                           >
                                              <Trash2 size={16} />
                                           </button>
                                        </div>
@@ -364,7 +367,7 @@ const RoughNoteDetails = () => {
                   type="button" 
                   onClick={() => setEntryType("send")}
                   className={`py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-all
-                             ${entryType === 'send' ? 'bg-emerald-500 text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-base)]'}`}
+                             ${entryType === 'send' ? 'bg-rose-500 text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-base)]'}`}
                 >
                    <SendHorizontal size={16} /> I Sent Money
                 </button>
@@ -372,7 +375,7 @@ const RoughNoteDetails = () => {
                   type="button" 
                   onClick={() => setEntryType("receive")}
                   className={`py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-all
-                             ${entryType === 'receive' ? 'bg-rose-500 text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-base)]'}`}
+                             ${entryType === 'receive' ? 'bg-emerald-500 text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-base)]'}`}
                 >
                    <HandCoins size={16} /> I Got Money
                 </button>
@@ -432,11 +435,11 @@ const RoughNoteDetails = () => {
             </div>
 
             <div className={`p-4 rounded-xl flex items-start gap-3
-                           ${entryType === 'send' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}>
-               <div className={`mt-0.5 shrink-0 ${entryType === "send" ? "text-emerald-500" : "text-rose-500"}`}>
+                           ${entryType === 'send' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+               <div className={`mt-0.5 shrink-0 ${entryType === "send" ? "text-rose-500" : "text-emerald-500"}`}>
                   {entryType === "send" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
                </div>
-               <p className={`text-sm ${entryType === 'send' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+               <p className={`text-sm ${entryType === 'send' ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                   {entryType === 'send' 
                     ? `Tracking ₹${amount || '0'} as an expense you paid. ${person?.name} owes this back to you.` 
                     : `Tracking ₹${amount || '0'} as money received. This reduces ${person?.name}'s debt to you.`
@@ -449,12 +452,71 @@ const RoughNoteDetails = () => {
                <ConfirmBtn 
                  type="submit" 
                  disabled={isSubmitting} 
-                 className={entryType === 'send' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-rose-500 hover:bg-rose-600 text-white'}
+                 className={entryType === 'send' ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
                >
                  Confirm Entry
                </ConfirmBtn>
             </ModalFooter>
          </form>
+      </Modal>
+
+      {/* ── ENTRY DETAILS MODAL ── */}
+      <Modal open={showEntryDetails} onClose={() => setShowEntryDetails(false)} title="Entry Details" maxWidth="max-w-md">
+         {selectedEntry && (
+            <div className="mt-4 flex flex-col gap-6">
+               <div className={`p-4 rounded-xl flex items-center justify-between
+                              ${selectedEntry.type === 'send' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'}`}>
+                  <div className="flex items-center gap-3">
+                     <div className={`p-2 rounded-lg ${selectedEntry.type === 'send' ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                        {selectedEntry.type === 'send' ? <SendHorizontal size={20} /> : <HandCoins size={20} />}
+                     </div>
+                     <div>
+                        <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                           {selectedEntry.type === 'send' ? 'You Sent' : 'You Received'}
+                        </p>
+                        <p className={`text-xl font-bold ${selectedEntry.type === 'send' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                           ₹{selectedEntry.amount.toLocaleString("en-IN")}
+                        </p>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider mb-1">Date</p>
+                     <p className="text-sm font-medium text-[var(--color-text-base)]">{formatDate(selectedEntry.date.split("T")[0])}</p>
+                     <p className="text-xs text-[var(--color-text-muted)]">{new Date(selectedEntry.date).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <div>
+                     <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider mb-1">Category</p>
+                     <p className="text-sm font-medium text-[var(--color-text-base)]">{selectedEntry.category}</p>
+                  </div>
+               </div>
+               
+               <div>
+                  <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider mb-1">Description / Memo</p>
+                  <p className="text-sm text-[var(--color-text-base)]">{selectedEntry.description || "—"}</p>
+               </div>
+
+               {selectedEntry.notes && (
+                  <div>
+                     <p className="text-xs text-[var(--color-text-faint)] uppercase tracking-wider mb-1">Additional Notes</p>
+                     <div className="bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-xl p-4 text-sm text-[var(--color-text-base)] whitespace-pre-wrap">
+                        {selectedEntry.notes}
+                     </div>
+                  </div>
+               )}
+
+               <ModalFooter>
+                  <button 
+                    onClick={() => setShowEntryDetails(false)}
+                    className="w-full py-2.5 rounded-lg bg-[var(--color-bg-page)] border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-bg-elevated)] transition-all"
+                  >
+                     Close
+                  </button>
+               </ModalFooter>
+            </div>
+         )}
       </Modal>
     </div>
   );

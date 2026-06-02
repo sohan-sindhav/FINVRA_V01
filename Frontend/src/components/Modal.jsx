@@ -14,11 +14,15 @@
  *   children  ReactNode
  */
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
-const Modal = ({ open, onClose, title, children, maxWidth = "max-w-sm" }) => (
-  <AnimatePresence>
+const Modal = ({ open, onClose, title, children, maxWidth = "max-w-sm" }) => {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <AnimatePresence>
     {open && (
       <motion.div
         key="overlay"
@@ -27,7 +31,7 @@ const Modal = ({ open, onClose, title, children, maxWidth = "max-w-sm" }) => (
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/65 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/65 flex items-center justify-center z-[9999] p-4"
       >
         <motion.div
           key="panel"
@@ -54,8 +58,10 @@ const Modal = ({ open, onClose, title, children, maxWidth = "max-w-sm" }) => (
         </motion.div>
       </motion.div>
     )}
-  </AnimatePresence>
-);
+  </AnimatePresence>,
+  document.body
+  );
+};
 
 /* ── Shared field label used inside modals ─────────────────────────────── */
 export const ModalField = ({ label, children }) => (
