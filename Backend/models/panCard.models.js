@@ -28,6 +28,22 @@ const panCardSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "BankAcc",
   },
+  broker: {
+    type: String,
+    default: "",
+    set: (v) => (v ? encrypt(v) : ""),
+    get: (v) => (v ? decrypt(v) : ""),
+  },
+  loggedInDevice: {
+    type: String,
+    default: "",
+    set: (v) => (v ? encrypt(v) : ""),
+    get: (v) => (v ? decrypt(v) : ""),
+  },
+  lastFundingMethod: {
+    type: String,
+    default: "",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

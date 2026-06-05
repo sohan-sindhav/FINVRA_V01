@@ -8,7 +8,7 @@ import Modal, {
   ConfirmBtn,
   modalInputCls,
 } from "../components/Modal";
-import IPOApplyWizard from "../components/IPOApplyWizard";
+import IPOApplyGrid from "../components/IPOApplyGrid";
 import IPOApplicationsDetailsModal from "../components/IPOApplicationsDetailsModal";
 import { useTheme } from "../theme/ThemeContext";
 
@@ -251,7 +251,7 @@ const IPOPage = () => {
         </form>
       </Modal>
 
-      <IPOApplyWizard 
+      <IPOApplyGrid
         open={showApplyModal} 
         onClose={() => { setShowApplyModal(false); setActiveIPO(null); }} 
         ipo={activeIPO} 

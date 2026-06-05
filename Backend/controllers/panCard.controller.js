@@ -48,3 +48,30 @@ export const deletePanCard = async (req, res) => {
     return res.status(500).json({ message: "Failed to delete PAN card", error: error.message });
   }
 };
+
+export const updatePanCard = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user._id;
+  // Only allow editing these metadata fields — PAN number and name are immutable here
+  const { broker, loggedInDevice, lastFundingMethod, nameOnPan } = req.body;
+
+  try {
+    const updates = {};
+    if (broker            !== undefined) updates.broker            = broker;
+    if (loggedInDevice    !== undefined) updates.loggedInDevice    = loggedInDevice;
+    if (lastFundingMethod !== undefined) updates.lastFundingMethod = lastFundingMethod;
+    if (nameOnPan         !== undefined) updates.nameOnPan         = nameOnPan;
+
+    const panCard = await PanCard.findOneAndUpdate(
+      { _id: id, user: userId },
+      { $set: updates },
+      { new: true }
+    );
+    if (!panCard) {
+      return res.status(404).json({ message: "PAN Card not found or unauthorized" });
+    }
+    return res.status(200).json({ message: "PAN Card updated", panCard });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to update PAN card", error: error.message });
+  }
+};

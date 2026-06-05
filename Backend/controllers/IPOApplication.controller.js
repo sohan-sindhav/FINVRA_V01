@@ -21,7 +21,7 @@ export const applyIPO = async (req, res) => {
     const results = [];
 
     for (const app of applications) {
-      const { panId, bankAccId } = app;
+      const { panId, bankAccId, fundingMethod = "", loggedInDevice = "" } = app;
 
       // 1. Check Bank Balance
       const bank = await BankAcc.findOne({ _id: bankAccId, userId }).session(session);
@@ -42,8 +42,11 @@ export const applyIPO = async (req, res) => {
       bank.blockedBalance += amountPerApplication;
       await bank.save({ session });
 
-      // 4. Update PAN last used bank
-      await PanCard.findByIdAndUpdate(panId, { lastUsedBankAcc: bankAccId }, { session });
+      // 4. Update PAN last used bank, last funding method, and device
+      const panUpdate = { lastUsedBankAcc: bankAccId };
+      if (fundingMethod) panUpdate.lastFundingMethod = fundingMethod;
+      if (loggedInDevice) panUpdate.loggedInDevice = loggedInDevice;
+      await PanCard.findByIdAndUpdate(panId, panUpdate, { session });
 
       // 5. Create Application record
       const newApp = new IPOApplication({
@@ -52,7 +55,8 @@ export const applyIPO = async (req, res) => {
         pan: panId,
         bankAcc: bankAccId,
         amount: amountPerApplication,
-        status: "Pending"
+        status: "Pending",
+        fundingMethod,
       });
       await newApp.save({ session });
       

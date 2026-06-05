@@ -47,6 +47,10 @@ const ipoApplicationSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  fundingMethod: {
+    type: String,
+    default: "",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

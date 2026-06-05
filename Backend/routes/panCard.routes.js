@@ -1,6 +1,6 @@
 import express from "express";
 import { checkAuth } from "../middleware/checkAuth.js";
-import { addPanCard, getPanCards, deletePanCard } from "../controllers/panCard.controller.js";
+import { addPanCard, getPanCards, deletePanCard, updatePanCard } from "../controllers/panCard.controller.js";
 import {
   sendShareRequest,
   getIncomingRequests,
@@ -16,6 +16,7 @@ const router = express.Router();
 router.post("/create", checkAuth, addPanCard);
 router.get("/get", checkAuth, getPanCards);
 router.delete("/delete/:id", checkAuth, deletePanCard);
+router.patch("/update/:id", checkAuth, updatePanCard);
 
 // ── PAN Sharing routes ────────────────────────────────────────────────────
 router.post("/share/send", checkAuth, sendShareRequest);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { usePan } from "../context/PanContext";
-import { Plus, Trash2, Share2, Search, X, Check, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Share2, Search, X, Check, RotateCcw, ChevronDown, ChevronUp, Pencil, Smartphone, Building2 } from "lucide-react";
 import { useTheme } from "../theme/ThemeContext";
 import Modal, { ModalField, ModalFooter, CancelBtn, ConfirmBtn, modalInputCls } from "../components/Modal.jsx";
 
@@ -201,7 +201,7 @@ const OutgoingShares = ({ shares, revokeShare }) => {
 const PanManagerPage = () => {
   const {
     panCards, loading,
-    addPanCard, deletePanCard,
+    addPanCard, deletePanCard, updatePanCard,
     sharedWithMe, outgoingShares,
     sendShareRequest, revokeShare,
   } = usePan();
@@ -215,6 +215,11 @@ const PanManagerPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData]     = useState({ panNumber: "", nameOnPan: "" });
   const [error, setError]           = useState(null);
+  // Broker / device inline edit state
+  const [editingPanId, setEditingPanId] = useState(null);
+  const [editFields, setEditFields]     = useState({ nameOnPan: "", broker: "", loggedInDevice: "" });
+  const [editSaving, setEditSaving]     = useState(false);
+  const [editError, setEditError]       = useState("");
 
   // ── Add PAN ──────────────────────────────────────────────────────────────
   const handleAddPan = async (e) => {
@@ -235,6 +240,22 @@ const PanManagerPage = () => {
     }
   };
 
+  // ── Inline broker/device edit ─────────────────────────────────────────────
+  const openEdit = (pan) => {
+    setEditingPanId(pan._id);
+    setEditFields({ nameOnPan: pan.nameOnPan || "", broker: pan.broker || "", loggedInDevice: pan.loggedInDevice || "" });
+    setEditError("");
+  };
+  const closeEdit = () => { setEditingPanId(null); setEditError(""); };
+  const saveEdit = async (panId) => {
+    setEditSaving(true);
+    const res = await updatePanCard(panId, editFields);
+    setEditSaving(false);
+    if (res.success) closeEdit();
+    else setEditError(res.message || "Save failed");
+  };
+
+
   // ── Filtered / sorted ────────────────────────────────────────────────────
   const filteredMine = panCards.filter((p) =>
     p.panNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -253,40 +274,116 @@ const PanManagerPage = () => {
 
   // ── Row / Card helpers ───────────────────────────────────────────────────
   const renderDesktopRow = (pan, i, deletable) => (
-    <tr key={pan._id} className="hover:bg-white/[0.02] transition-colors group">
-      <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
-      <td className="px-6 py-4">
-        <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">
-          {pan.panNumber}
-        </span>
-      </td>
-      <td className="px-6 py-4 text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</td>
-      <td className="px-6 py-4">
-        <div className="flex items-center justify-center">
-          <Badge color="emerald">Verified</Badge>
-        </div>
-      </td>
-      <td className="px-6 py-4 text-right">
-        {deletable && (
-          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => setIsShareOpen(true)}
-              className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-indigo-500/10 hover:text-indigo-400 border border-transparent hover:border-indigo-500/20 transition-all"
-              title="Share this PAN"
-            >
-              <Share2 size={14} />
-            </button>
-            <button
-              onClick={() => { if (confirm("Delete card?")) deletePanCard(pan._id); }}
-              className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all"
-              title="Delete"
-            >
-              <Trash2 size={14} />
-            </button>
+    <React.Fragment key={pan._id}>
+      <tr className="hover:bg-white/[0.02] transition-colors group">
+        <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
+        <td className="px-6 py-4">
+          <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">
+            {pan.panNumber}
+          </span>
+        </td>
+        <td className="px-6 py-4 text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-1.5">
+            <Building2 size={11} className="text-white/20" />
+            <span className="text-[12px] text-white/40 italic">{pan.broker || <span className="text-white/15">—</span>}</span>
           </div>
-        )}
-      </td>
-    </tr>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-1.5">
+            <Smartphone size={11} className="text-white/20" />
+            <span className="text-[12px] text-white/40 italic">{pan.loggedInDevice || <span className="text-white/15">—</span>}</span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center justify-center">
+            <Badge color="emerald">Verified</Badge>
+          </div>
+        </td>
+        <td className="px-6 py-4 text-right">
+          {deletable && (
+            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => openEdit(pan)}
+                className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-amber-500/10 hover:text-amber-400 border border-transparent hover:border-amber-500/20 transition-all"
+                title="Edit broker / device"
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                onClick={() => setIsShareOpen(true)}
+                className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-indigo-500/10 hover:text-indigo-400 border border-transparent hover:border-indigo-500/20 transition-all"
+                title="Share this PAN"
+              >
+                <Share2 size={14} />
+              </button>
+              <button
+                onClick={() => { if (confirm("Delete card?")) deletePanCard(pan._id); }}
+                className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-white/40 hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-all"
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        </td>
+      </tr>
+      {/* Inline edit panel */}
+      {editingPanId === pan._id && (
+        <tr className="bg-amber-500/[0.03] border-b border-amber-500/10">
+          <td colSpan="7" className="px-6 py-4">
+            <div className="flex items-end gap-4 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Account Holder Name</label>
+                <input
+                  type="text"
+                  value={editFields.nameOnPan}
+                  onChange={e => setEditFields(f => ({ ...f, nameOnPan: e.target.value }))}
+                  placeholder="As on PAN card"
+                  className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 w-[200px] focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Broker</label>
+                <input
+                  type="text"
+                  value={editFields.broker}
+                  onChange={e => setEditFields(f => ({ ...f, broker: e.target.value }))}
+                  placeholder="e.g. Zerodha"
+                  className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 w-[180px] focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Logged-in Device</label>
+                <input
+                  type="text"
+                  value={editFields.loggedInDevice}
+                  onChange={e => setEditFields(f => ({ ...f, loggedInDevice: e.target.value }))}
+                  placeholder="e.g. iPhone 15"
+                  className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 w-[180px] focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+                />
+              </div>
+              {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
+              <div className="flex items-center gap-2 mb-0.5">
+                <button
+                  onClick={() => saveEdit(pan._id)}
+                  disabled={editSaving}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-black text-[12px] font-bold rounded-lg hover:bg-amber-400 transition-colors disabled:opacity-50"
+                >
+                  {editSaving ? "Saving..." : "Save"}
+                </button>
+                <button
+                  onClick={closeEdit}
+                  className="px-4 py-2 text-[12px] font-bold text-white/30 hover:text-white/60 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </React.Fragment>
   );
 
   const renderMobileCard = (pan, deletable) => (
@@ -295,11 +392,72 @@ const PanManagerPage = () => {
         <div className="flex flex-col gap-2">
           <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">{pan.panNumber}</span>
           <span className="text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</span>
+          {(pan.broker || pan.loggedInDevice) && (
+            <div className="flex flex-col gap-1 mt-1">
+              {pan.broker && (
+                <span className="text-[11px] text-white/30 flex items-center gap-1.5">
+                  <Building2 size={10} /> {pan.broker}
+                </span>
+              )}
+              {pan.loggedInDevice && (
+                <span className="text-[11px] text-white/30 flex items-center gap-1.5">
+                  <Smartphone size={10} /> {pan.loggedInDevice}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <Badge color="emerald">Verified</Badge>
       </div>
+      {editingPanId === pan._id && (
+        <div className="flex flex-col gap-3 p-3 bg-amber-500/[0.04] border border-amber-500/10 rounded-xl">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Account Holder Name</label>
+            <input
+              type="text"
+              value={editFields.nameOnPan}
+              onChange={e => setEditFields(f => ({ ...f, nameOnPan: e.target.value }))}
+              placeholder="As on PAN card"
+              className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Broker</label>
+            <input
+              type="text"
+              value={editFields.broker}
+              onChange={e => setEditFields(f => ({ ...f, broker: e.target.value }))}
+              placeholder="e.g. Zerodha"
+              className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Logged-in Device</label>
+            <input
+              type="text"
+              value={editFields.loggedInDevice}
+              onChange={e => setEditFields(f => ({ ...f, loggedInDevice: e.target.value }))}
+              placeholder="e.g. iPhone 15"
+              className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
+            />
+          </div>
+          {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
+          <div className="flex gap-2">
+            <button onClick={() => saveEdit(pan._id)} disabled={editSaving}
+              className="flex-1 py-2 bg-amber-500 text-black text-[12px] font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50">
+              {editSaving ? "Saving..." : "Save"}
+            </button>
+            <button onClick={closeEdit} className="flex-1 py-2 text-[12px] font-bold text-white/30 hover:text-white/60">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {deletable && (
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.04]">
+          <button onClick={() => openEdit(pan)} className="text-white/40 hover:text-amber-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-amber-500/10">
+            <Pencil size={13} /> Edit
+          </button>
           <button onClick={() => setIsShareOpen(true)} className="text-white/40 hover:text-indigo-400 transition-colors flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider px-3 py-2 rounded-[8px] hover:bg-indigo-500/10">
             <Share2 size={14} /> Share
           </button>
@@ -312,7 +470,7 @@ const PanManagerPage = () => {
   );
 
   const tableEmpty = (msg) => (
-    <tr><td colSpan="5" className="py-24 text-center text-[13px] font-medium text-white/40">{msg}</td></tr>
+    <tr><td colSpan="7" className="py-24 text-center text-[13px] font-medium text-white/40">{msg}</td></tr>
   );
 
   return (
@@ -385,8 +543,10 @@ const PanManagerPage = () => {
                     <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
                     <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">PAN Number</th>
                     <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Account Holder</th>
+                    <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Broker</th>
+                    <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Device</th>
                     <th className="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white/40 w-24">Status</th>
-                    <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40 w-32">Actions</th>
+                    <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-white/40 w-40">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
@@ -443,6 +603,8 @@ const PanManagerPage = () => {
                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40 w-12">#</th>
                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">PAN Number</th>
                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Holder Name</th>
+                            <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Broker</th>
+                            <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white/40">Device</th>
                             <th className="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white/40">Status</th>
                             <th className="px-6 py-4 w-16" />
                           </tr>

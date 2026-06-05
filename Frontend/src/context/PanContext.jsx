@@ -61,6 +61,16 @@ export const PanProvider = ({ children }) => {
     }
   };
 
+  const updatePanCard = async (id, data) => {
+    try {
+      const res = await axiosInstance.patch(`/api/pan/update/${id}`, data);
+      await getPanCards();
+      return { success: true, message: res.message };
+    } catch (error) {
+      return { success: false, message: error?.message || "Failed to update PAN card" };
+    }
+  };
+
   // ── Sharing ────────────────────────────────────────────────────────────
   const sendShareRequest = async ({ recipientEmail, panCardIds }) => {
     try {
@@ -153,6 +163,7 @@ export const PanProvider = ({ children }) => {
         getPanCards,
         addPanCard,
         deletePanCard,
+        updatePanCard,
         // Sharing
         incomingRequests,
         sharedWithMe,
