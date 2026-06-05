@@ -14,6 +14,7 @@ import panCardRoutes from "./routes/panCard.routes.js";
 import ipoApplicationRoutes from "./routes/IPOApplication.routes.js";
 import roughNoteRoutes from "./routes/RoughNote.routes.js";
 import partnerRoutes from "./routes/partner.routes.js";
+import ipoShareRoutes from "./routes/IPOShare.route.js";
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -28,21 +29,23 @@ const app = express();
 app.set("trust proxy", 1)
 const PORT = process.env.PORT || 5000;
 
+const corsOptions = {
+  origin: (origin, callback) => {
+    console.log("CORS CHECKING ORIGIN:", origin);
+    if (!origin || allowedOrigins.includes(origin) || (origin && origin.startsWith("http://localhost:"))) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
 app.use(globalLimiter);
 app.use(cookieParser());
 app.use(express.json());
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
 
 //Making Database connection
 connectDB();
@@ -58,6 +61,7 @@ app.use("/api/pan", panCardRoutes);
 app.use("/api/ipo/app", ipoApplicationRoutes);
 app.use("/api/rough-notes", roughNoteRoutes);
 app.use("/api/partners", partnerRoutes);
+app.use("/api/ipo-share", ipoShareRoutes);
 
 //Server is running on port
 app.listen(PORT, () => {

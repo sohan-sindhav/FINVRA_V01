@@ -7,6 +7,8 @@ const IPOContext = createContext();
 export const IPOProvider = ({ children }) => {
   const [ipos, setIpos] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [incomingShareRequests, setIncomingShareRequests] = useState([]);
+  const [sharedIPOs, setSharedIPOs] = useState([]);
   const [loading, setLoading] = useState(false);
   const { loggedIn } = useAuth();
 
@@ -93,18 +95,60 @@ export const IPOProvider = ({ children }) => {
     }
   };
 
+  const fetchIncomingShareRequests = async () => {
+    if (!loggedIn) return;
+    try {
+      const res = await axiosInstance.get("/api/ipo-share/incoming");
+      if (res.success && res.requests) {
+        setIncomingShareRequests(res.requests);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const respondToShareRequest = async (id, action) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post(`/api/ipo-share/respond/${id}`, { action });
+      await fetchIncomingShareRequests();
+      await fetchSharedIPOs();
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSharedIPOs = async () => {
+    if (!loggedIn) return;
+    try {
+      const res = await axiosInstance.get("/api/ipo-share/shared-with-me");
+      if (res.success && res.shares) {
+        setSharedIPOs(res.shares);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => { 
     if (loggedIn) {
       getAllIPO(); 
       fetchApplications();
+      fetchIncomingShareRequests();
+      fetchSharedIPOs();
     } else {
       setIpos([]);
       setApplications([]);
+      setIncomingShareRequests([]);
+      setSharedIPOs([]);
     }
   }, [loggedIn]);
 
   return (
-    <IPOContext.Provider value={{ ipos, applications, loading, getAllIPO, createIPO, deleteIPO, applyForIPO, cancelApplication, fetchApplications, updateStatus }}>
+    <IPOContext.Provider value={{ ipos, applications, loading, incomingShareRequests, sharedIPOs, getAllIPO, createIPO, deleteIPO, applyForIPO, cancelApplication, fetchApplications, updateStatus, fetchIncomingShareRequests, respondToShareRequest, fetchSharedIPOs }}>
       {children}
     </IPOContext.Provider>
   );

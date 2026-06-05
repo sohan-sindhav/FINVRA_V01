@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useBankAccounts } from "../context/BankAccContext";
 import { usePan } from "../context/PanContext";
 import { useTransactions } from "../context/TransactionContext";
+import { useIPO } from "../context/IPOContext";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const Navbar = () => {
   const { minBalanceWarnings } = useBankAccounts();
   const { incomingRequests: panRequests, respondToRequest: respondToPan } = usePan();
   const { incomingRequests: transactionRequests, respondToRequest: respondToTransaction } = useTransactions();
+  const { incomingShareRequests: ipoRequests, respondToShareRequest: respondToIPO } = useIPO();
 
   const [bellOpen, setBellOpen] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
@@ -25,7 +27,8 @@ const Navbar = () => {
   const minBalCount = minBalanceWarnings?.length ?? 0;
   const panReqCount = panRequests?.length ?? 0;
   const transReqCount = transactionRequests?.length ?? 0;
-  const totalBadge = minBalCount + panReqCount + transReqCount;
+  const ipoReqCount = ipoRequests?.length ?? 0;
+  const totalBadge = minBalCount + panReqCount + transReqCount + ipoReqCount;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,6 +44,9 @@ const Navbar = () => {
   };
   const handleRespondTransaction = async (id, action) => {
     await respondToTransaction(id, action);
+  };
+  const handleRespondIPO = async (id, action) => {
+    await respondToIPO(id, action);
   };
 
   const getPageTitle = () => {
@@ -181,6 +187,35 @@ const Navbar = () => {
                           </button>
                           <button
                             onClick={() => handleRespondTransaction(req._id, "decline")}
+                            className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-white/[0.04] text-white/50 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 border border-white/[0.04] transition-all"
+                          >
+                            <X size={12} /> Decline
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* IPO share requests */}
+                  {ipoRequests?.map((req) => (
+                    <div key={`ipo-${req._id}`} className="px-5 py-4 flex items-start gap-3 hover:bg-white/[0.02] transition-colors">
+                      <div className="w-8 h-8 rounded-[8px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-400 text-xs font-bold">I</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-white/90 leading-snug">
+                          {req.fromUser?.name} shared IPO: {req.ipo?.companyname}
+                        </p>
+                        <p className="text-[11px] text-white/40 mt-0.5">{req.fromUser?.email}</p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button
+                            onClick={() => handleRespondIPO(req._id, "accept")}
+                            className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all"
+                          >
+                            <Check size={12} /> Accept
+                          </button>
+                          <button
+                            onClick={() => handleRespondIPO(req._id, "decline")}
                             className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-[6px] bg-white/[0.04] text-white/50 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/20 border border-white/[0.04] transition-all"
                           >
                             <X size={12} /> Decline
