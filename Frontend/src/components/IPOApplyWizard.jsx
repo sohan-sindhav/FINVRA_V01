@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { usePan } from "../context/PanContext";
 import { useBankAccounts } from "../context/BankAccContext";
 import { useIPO } from "../context/IPOContext";
+import axiosInstance from "../configs/AxiosInstance";
 import Modal, {
   ModalFooter,
   CancelBtn,
@@ -19,6 +20,8 @@ const IPOApplyWizard = ({ open, onClose, ipo }) => {
   const [panBankMapping, setPanBankMapping] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [partners, setPartners] = useState([]);
+  const [funderUserId, setFunderUserId] = useState("");
 
   // Initialize selection
   useEffect(() => {
@@ -27,8 +30,21 @@ const IPOApplyWizard = ({ open, onClose, ipo }) => {
       setSelectedPanIds([]);
       setPanBankMapping({});
       setError(null);
+      setFunderUserId("");
+      fetchPartners();
     }
   }, [open, ipo]);
+
+  const fetchPartners = async () => {
+    try {
+      const res = await axiosInstance.get("/api/partners");
+      if (res.success) {
+        setPartners(res.partners);
+      }
+    } catch (err) {
+      console.error("Failed to load partners", err);
+    }
+  };
 
   if (!ipo) return null;
 
@@ -76,7 +92,7 @@ const IPOApplyWizard = ({ open, onClose, ipo }) => {
       bankAccId: panBankMapping[pid]
     }));
 
-    const result = await applyForIPO(ipo._id, apps);
+    const result = await applyForIPO(ipo._id, apps, funderUserId);
     
     if (result.success) {
       await getBankAcc(); // Refresh balances
@@ -155,12 +171,26 @@ const IPOApplyWizard = ({ open, onClose, ipo }) => {
           </div>
         )}
 
-        {/* STEP 2: ASSIGN BANK ACCOUNTS */}
+        {/* STEP 2: ASSIGN BANK ACCOUNTS & FUNDER */}
         {step === 2 && (
           <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 bg-[#1a1a1a] p-3 rounded-xl border border-gray-800/80">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Funded By</span>
+              <select
+                className={modalSelectCls}
+                value={funderUserId}
+                onChange={(e) => setFunderUserId(e.target.value)}
+              >
+                <option value="">Self</option>
+                {partners.map(p => (
+                  <option key={p._id} value={p._id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Configure Bank Accounts</span>
             
-            <div className="max-h-[320px] overflow-y-auto pr-1 flex flex-col gap-4 custom-scrollbar">
+            <div className="max-h-[250px] overflow-y-auto pr-1 flex flex-col gap-4 custom-scrollbar">
               {selectedPanIds.map(pid => {
                 const pan = panCards.find(p => p._id === pid);
                 return (

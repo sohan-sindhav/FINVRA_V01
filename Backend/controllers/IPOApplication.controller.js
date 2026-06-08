@@ -5,7 +5,7 @@ import IPOManager from "../models/IPOManager.models.js";
 import mongoose from "mongoose";
 
 export const applyIPO = async (req, res) => {
-  const { ipoId, applications } = req.body; // applications: [{ panId, bankAccId }]
+  const { ipoId, applications, funderUserId } = req.body; // applications: [{ panId, bankAccId }]
   const userId = req.user._id;
 
   const session = await mongoose.startSession();
@@ -15,6 +15,21 @@ export const applyIPO = async (req, res) => {
     const ipo = await IPOManager.findById(ipoId);
     if (!ipo) {
       throw new Error("IPO not found");
+    }
+
+    let partnerIpoId = null;
+    if (funderUserId) {
+      let partnerIpo = await IPOManager.findOne({ userId: funderUserId, companyname: ipo.companyname }).session(session);
+      if (!partnerIpo) {
+        const ipoData = ipo.toObject();
+        delete ipoData._id;
+        delete ipoData.createdAt;
+        delete ipoData.updatedAt;
+        ipoData.userId = funderUserId;
+        partnerIpo = new IPOManager(ipoData);
+        await partnerIpo.save({ session });
+      }
+      partnerIpoId = partnerIpo._id;
     }
 
     const amountPerApplication = ipo.minimum_retail_price;
@@ -67,8 +82,32 @@ export const applyIPO = async (req, res) => {
         mySharePct,
         holderSharePct,
         funderSharePct,
+        funderUser: funderUserId || null,
       });
       await newApp.save({ session });
+
+      if (funderUserId && partnerIpoId) {
+        const clonedApp = new IPOApplication({
+          user: funderUserId,
+          ipo: partnerIpoId,
+          pan: panId,
+          bankAcc: bankAccId,
+          amount: amountPerApplication,
+          status: "Pending",
+          fundingMethod,
+          mySharePct,
+          holderSharePct,
+          funderSharePct,
+          funderUser: funderUserId,
+          isReadOnly: true,
+          sourceApplication: newApp._id,
+          originalUser: userId,
+          panNameSnapshot: updatedPan ? updatedPan.nameOnPan : "",
+          panNumberSnapshot: updatedPan ? updatedPan.panNumber : "",
+          bankNameSnapshot: bank ? bank.nickname : "",
+        });
+        await clonedApp.save({ session });
+      }
       
       results.push(newApp);
     }
@@ -89,6 +128,7 @@ export const getUserApplications = async (req, res) => {
       .populate("ipo")
       .populate("pan")
       .populate("bankAcc")
+      .populate("originalUser", "name")
       .sort({ createdAt: -1 });
     res.status(200).json(apps);
   } catch (error) {
@@ -115,8 +155,9 @@ export const cancelApplication = async (req, res) => {
       await bank.save({ session });
     }
 
-    // 2. Delete Application
+    // 2. Delete Application and Clones
     await IPOApplication.deleteOne({ _id: appId }).session(session);
+    await IPOApplication.deleteOne({ sourceApplication: appId }).session(session);
 
     await session.commitTransaction();
     res.status(200).json({ success: true, message: "Application cancelled and funds restored" });
@@ -129,7 +170,7 @@ export const cancelApplication = async (req, res) => {
 };
 export const updateApplicationStatus = async (req, res) => {
   const { appId } = req.params;
-  const { status, isGMPSold, gmpType, gmpPrice, mySharePct, holderSharePct, funderSharePct } = req.body;
+  const { status, isGMPSold, gmpType, gmpPrice, mySharePct, holderSharePct, funderSharePct, funderUser } = req.body;
   const userId = req.user._id;
 
   const session = await mongoose.startSession();
@@ -149,6 +190,12 @@ export const updateApplicationStatus = async (req, res) => {
     if (mySharePct !== undefined) app.mySharePct = mySharePct;
     if (holderSharePct !== undefined) app.holderSharePct = holderSharePct;
     if (funderSharePct !== undefined) app.funderSharePct = funderSharePct;
+
+    let funderChanged = false;
+    if (funderUser !== undefined && String(funderUser || "") !== String(app.funderUser || "")) {
+      funderChanged = true;
+      app.funderUser = funderUser || null;
+    }
 
     // Handle bank unblocking/blocking on Refunded status transition
     if (status !== undefined && app.status !== status) {
@@ -197,6 +244,72 @@ export const updateApplicationStatus = async (req, res) => {
     app.funderProfit = (calculatedProfit * (app.funderSharePct / 100)) || 0;
 
     await app.save({ session });
+
+    if (funderChanged) {
+      await IPOApplication.deleteOne({ sourceApplication: app._id }).session(session);
+
+      if (app.funderUser) {
+        let partnerIpo = await IPOManager.findOne({ userId: app.funderUser, companyname: ipo.companyname }).session(session);
+        if (!partnerIpo) {
+          const ipoData = ipo.toObject();
+          delete ipoData._id;
+          delete ipoData.createdAt;
+          delete ipoData.updatedAt;
+          ipoData.userId = app.funderUser;
+          partnerIpo = new IPOManager(ipoData);
+          await partnerIpo.save({ session });
+        }
+
+        const pan = await PanCard.findById(app.pan).session(session);
+        const bank = await BankAcc.findById(app.bankAcc).session(session);
+
+        const clonedApp = new IPOApplication({
+          user: app.funderUser,
+          ipo: partnerIpo._id,
+          pan: app.pan,
+          bankAcc: app.bankAcc,
+          amount: app.amount,
+          status: app.status,
+          fundingMethod: app.fundingMethod,
+          isGMPSold: app.isGMPSold,
+          gmpType: app.gmpType,
+          gmpPrice: app.gmpPrice,
+          mySharePct: app.mySharePct,
+          holderSharePct: app.holderSharePct,
+          funderSharePct: app.funderSharePct,
+          profit: app.profit,
+          myProfit: app.myProfit,
+          holderProfit: app.holderProfit,
+          funderProfit: app.funderProfit,
+          funderUser: app.funderUser,
+          isReadOnly: true,
+          sourceApplication: app._id,
+          originalUser: userId,
+          panNameSnapshot: pan ? pan.nameOnPan : "",
+          panNumberSnapshot: pan ? pan.panNumber : "",
+          bankNameSnapshot: bank ? bank.nickname : "",
+        });
+        await clonedApp.save({ session });
+      }
+    } else {
+      // UPDATE CLONE IF EXISTS
+      const clonedApp = await IPOApplication.findOne({ sourceApplication: app._id }).session(session);
+      if (clonedApp) {
+        clonedApp.status = app.status;
+        clonedApp.isGMPSold = app.isGMPSold;
+        clonedApp.gmpType = app.gmpType;
+        clonedApp.gmpPrice = app.gmpPrice;
+        clonedApp.mySharePct = app.mySharePct;
+        clonedApp.holderSharePct = app.holderSharePct;
+        clonedApp.funderSharePct = app.funderSharePct;
+        clonedApp.profit = app.profit;
+        clonedApp.myProfit = app.myProfit;
+        clonedApp.holderProfit = app.holderProfit;
+        clonedApp.funderProfit = app.funderProfit;
+        await clonedApp.save({ session });
+      }
+    }
+
     await session.commitTransaction();
 
     res.status(200).json({ success: true, application: app });

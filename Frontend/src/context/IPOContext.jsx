@@ -67,10 +67,10 @@ export const IPOProvider = ({ children }) => {
     }
   };
 
-  const applyForIPO = async (ipoId, apps) => {
+  const applyForIPO = async (ipoId, apps, funderUserId) => {
     try {
       setLoading(true);
-      const res = await axiosInstance.post("/api/ipo/app/apply", { ipoId, applications: apps });
+      const res = await axiosInstance.post("/api/ipo/app/apply", { ipoId, applications: apps, funderUserId });
       await fetchApplications();
       // Also refresh IPO list just in case
       await getAllIPO();

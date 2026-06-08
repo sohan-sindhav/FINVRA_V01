@@ -75,6 +75,37 @@ const ipoApplicationSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  funderUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+  isReadOnly: {
+    type: Boolean,
+    default: false,
+  },
+  sourceApplication: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "IPOApplication",
+    default: null,
+  },
+  originalUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+  panNameSnapshot: {
+    type: String,
+    default: "",
+  },
+  bankNameSnapshot: {
+    type: String,
+    default: "",
+  },
+  panNumberSnapshot: {
+    type: String,
+    default: "",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

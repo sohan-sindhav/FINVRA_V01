@@ -163,8 +163,8 @@ const SharedIPODetailsModal = ({ open, onClose, shareId }) => {
                       <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">PAN Number</th>
                       <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Status</th>
                       <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Sold</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Type</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP ₹</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold Type</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold ₹</th>
                       <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30">Profit</th>
                     </tr>
                   </thead>

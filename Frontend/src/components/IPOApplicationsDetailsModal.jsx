@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIPO } from "../context/IPOContext";
+import axiosInstance from "../configs/AxiosInstance";
 import { X, Search, RotateCcw, Download } from "lucide-react";
 
 const STATUS_OPTS = ["Pending", "Applied", "Not Applied", "Not Allotted", "Allotted", "Blocked", "Refunded"];
@@ -10,6 +11,15 @@ const SOLD_TYPES = ["Subject 1", "Subject 2", "Premium"];
 const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
   const { applications, cancelApplication, updateStatus } = useIPO();
   const [searchTerm, setSearchTerm] = useState("");
+  const [partners, setPartners] = useState([]);
+
+  React.useEffect(() => {
+    if (open) {
+      axiosInstance.get("/api/partners").then(res => {
+        if (res.success) setPartners(res.partners);
+      }).catch(err => console.log(err));
+    }
+  }, [open]);
 
   if (!ipo || typeof document === "undefined") return null;
 
@@ -17,14 +27,24 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
   
   const searchedApps = filteredApps.filter(app => {
     const s = searchTerm.toLowerCase();
+    const panName = app.pan?.nameOnPan || app.panNameSnapshot || "";
+    const panNumber = app.pan?.panNumber || app.panNumberSnapshot || "";
+    const bankName = app.bankAcc?.nickname || app.bankNameSnapshot || "";
     return (
-      app.pan?.nameOnPan?.toLowerCase().includes(s) ||
-      app.pan?.panNumber?.toLowerCase().includes(s) ||
-      app.bankAcc?.nickname?.toLowerCase().includes(s)
+      panName.toLowerCase().includes(s) ||
+      panNumber.toLowerCase().includes(s) ||
+      bankName.toLowerCase().includes(s)
     );
   });
 
-  const sortedApps = [...searchedApps].sort((a, b) => (a.pan?.nameOnPan || "").localeCompare(b.pan?.nameOnPan || ""));
+  const sortedApps = [...searchedApps].sort((a, b) => {
+    if (a.isReadOnly !== b.isReadOnly) {
+      return a.isReadOnly ? 1 : -1;
+    }
+    const nameA = a.pan?.nameOnPan || a.panNameSnapshot || "";
+    const nameB = b.pan?.nameOnPan || b.panNameSnapshot || "";
+    return nameA.localeCompare(nameB);
+  });
 
   const handleUpdate = async (appId, updates) => {
     await updateStatus(appId, updates);
@@ -128,7 +148,8 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">PAN</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Bank Account</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Status</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Funded By</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Sold</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold Type</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold ₹</th>
                     <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30" title="My % / Holder % / Funder %">Shares % (M/H/F)</th>
@@ -149,22 +170,28 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                         <td className="px-4 py-3 text-[12px] text-white/25 tabular-nums">{i + 1}</td>
                         
                         <td className="px-3 py-3">
-                          <span className="text-[13px] font-semibold text-white/80">{app.pan?.nameOnPan}</span>
+                          <div className="flex flex-col">
+                            <span className="text-[13px] font-semibold text-white/80">{app.pan?.nameOnPan || app.panNameSnapshot}</span>
+                            {app.isReadOnly && app.originalUser && (
+                              <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">Funded for {app.originalUser.name}</span>
+                            )}
+                          </div>
                         </td>
                         
                         <td className="px-3 py-3">
-                          <span className="text-[11px] font-mono tracking-widest text-white/40">{app.pan?.panNumber}</span>
+                          <span className="text-[11px] font-mono tracking-widest text-white/40">{app.pan?.panNumber || app.panNumberSnapshot}</span>
                         </td>
                         
                         <td className="px-3 py-3">
-                          <span className="text-[12px] text-emerald-400/70">{app.bankAcc?.nickname}</span>
+                          <span className="text-[12px] text-emerald-400/70">{app.bankAcc?.nickname || app.bankNameSnapshot}</span>
                         </td>
 
                         <td className="px-3 py-3">
                           <select 
                             value={app.status}
                             onChange={(e) => handleUpdate(app._id, { status: e.target.value })}
-                            className={`text-[11px] font-bold uppercase tracking-wider bg-white/[0.04] border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500/50 cursor-pointer
+                            disabled={app.isReadOnly}
+                            className={`text-[11px] font-bold uppercase tracking-wider bg-white/[0.04] border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500/50 ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                                         ${app.status === 'Allotted' ? 'text-emerald-400' : 
                                           app.status === 'Pending' ? 'text-amber-400' : 
                                           app.status === 'Not Applied' ? 'text-rose-400' :
@@ -175,9 +202,25 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                         </td>
 
                         <td className="px-3 py-3">
+                          {!app.isReadOnly ? (
+                            <select
+                              value={app.funderUser || ""}
+                              onChange={(e) => handleUpdate(app._id, { funderUser: e.target.value })}
+                              className="text-[11px] font-bold tracking-wider bg-white/[0.04] border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500/50 cursor-pointer w-[75px]"
+                            >
+                              <option value="" className="bg-[#141414] text-white">Self</option>
+                              {partners.map(p => <option key={p._id} value={p._id} className="bg-[#141414] text-white">{p.name.split(' ')[0]}</option>)}
+                            </select>
+                          ) : (
+                            <span className="text-[11px] text-white/40">Self</span>
+                          )}
+                        </td>
+
+                        <td className="px-3 py-3">
                           <button 
                             onClick={() => handleUpdate(app._id, { isGMPSold: !app.isGMPSold })}
-                            className={`px-2.5 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors border ${
+                            disabled={app.isReadOnly}
+                            className={`px-2.5 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors border ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : ''} ${
                               app.isGMPSold 
                                 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' 
                                 : 'bg-white/[0.03] text-white/30 border-white/10 hover:border-white/20'
@@ -192,7 +235,8 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                             <select 
                               value={app.gmpType || "Premium"}
                               onChange={(e) => handleUpdate(app._id, { gmpType: e.target.value })}
-                              className="text-[11px] bg-transparent border-b border-white/10 text-white/70 focus:outline-none focus:border-indigo-500/50 pb-0.5 cursor-pointer w-[120px]"
+                              disabled={app.isReadOnly}
+                              className={`text-[11px] bg-transparent border-b border-white/10 text-white/70 focus:outline-none focus:border-indigo-500/50 pb-0.5 w-[85px] ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                             >
                               {!SOLD_TYPES.includes(app.gmpType) && app.gmpType && (
                                 <option value={app.gmpType} className="bg-[#141414] hidden">{app.gmpType}</option>
@@ -211,7 +255,8 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                               placeholder="₹"
                               defaultValue={app.gmpPrice || ""}
                               onBlur={(e) => handleUpdate(app._id, { gmpPrice: Number(e.target.value) })}
-                              className="text-[12px] bg-white/[0.04] border border-white/10 text-white/90 rounded px-2 py-1.5 w-[80px] focus:outline-none focus:border-indigo-500/50 font-mono"
+                              disabled={app.isReadOnly}
+                              className={`text-[12px] bg-white/[0.04] border border-white/10 text-white/90 rounded px-2 py-1.5 w-[65px] focus:outline-none focus:border-indigo-500/50 font-mono ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                             />
                           ) : (
                             <span className="text-[12px] text-white/15">—</span>
@@ -224,21 +269,24 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                               type="number"
                               defaultValue={app.mySharePct ?? 25}
                               onBlur={(e) => handleUpdate(app._id, { mySharePct: Number(e.target.value) })}
-                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              disabled={app.isReadOnly}
+                              className={`w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50 ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="My Share %"
                             />/
                             <input 
                               type="number"
                               defaultValue={app.holderSharePct ?? 25}
                               onBlur={(e) => handleUpdate(app._id, { holderSharePct: Number(e.target.value) })}
-                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              disabled={app.isReadOnly}
+                              className={`w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50 ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="Holder Share %"
                             />/
                             <input 
                               type="number"
                               defaultValue={app.funderSharePct ?? 50}
                               onBlur={(e) => handleUpdate(app._id, { funderSharePct: Number(e.target.value) })}
-                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              disabled={app.isReadOnly}
+                              className={`w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50 ${app.isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="Funder Share %"
                             />
                           </div>
@@ -260,14 +308,16 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                         </td>
 
                         <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleCancel(app._id)}
-                            className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all ml-auto whitespace-nowrap"
-                            title="Reverse Application"
-                          >
-                            <RotateCcw size={11} /> Reverse
-                          </button>
+                          {!app.isReadOnly && (
+                            <button
+                              type="button"
+                              onClick={() => handleCancel(app._id)}
+                              className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all ml-auto whitespace-nowrap"
+                              title="Reverse Application"
+                            >
+                              <RotateCcw size={11} /> Reverse
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
