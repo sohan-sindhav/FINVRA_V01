@@ -176,10 +176,10 @@ export const updateApplicationStatus = async (req, res) => {
     // PROFIT CALCULATION LOGIC
     let calculatedProfit = 0;
     if (app.isGMPSold) {
-      if (app.gmpType === "Allotted/Not Allotted") {
+      if (app.gmpType === "Allotted/Not Allotted" || app.gmpType === "Premium") {
         // Method 1: Profit is the GMP price per share * lot size regardless of allotment
         calculatedProfit = (app.gmpPrice || 0) * lotSize;
-      } else if (app.gmpType === "Just Allotted") {
+      } else if (app.gmpType === "Just Allotted" || app.gmpType === "Subject 1" || app.gmpType === "Subject 2") {
         // Method 2: Profit only counts if status is Allotted
         if (app.status === "Allotted") {
           calculatedProfit = (app.gmpPrice || 0) * lotSize;

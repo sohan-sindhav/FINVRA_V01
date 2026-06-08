@@ -5,7 +5,7 @@ import { useIPO } from "../context/IPOContext";
 import { X, Search, RotateCcw, Download } from "lucide-react";
 
 const STATUS_OPTS = ["Pending", "Applied", "Not Applied", "Not Allotted", "Allotted", "Blocked", "Refunded"];
-const GMP_TYPES = ["Allotted/Not Allotted", "Just Allotted"];
+const SOLD_TYPES = ["Subject 1", "Subject 2", "Premium"];
 
 const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
   const { applications, cancelApplication, updateStatus } = useIPO();
@@ -128,9 +128,9 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">PAN</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Bank Account</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Status</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Sold</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Type</th>
-                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP ₹</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold Type</th>
+                    <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">Sold ₹</th>
                     <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30" title="My % / Holder % / Funder %">Shares % (M/H/F)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30">Profit</th>
                     <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30 whitespace-nowrap">Action</th>
@@ -190,11 +190,14 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                         <td className="px-3 py-3">
                           {app.isGMPSold ? (
                             <select 
-                              value={app.gmpType}
+                              value={app.gmpType || "Premium"}
                               onChange={(e) => handleUpdate(app._id, { gmpType: e.target.value })}
                               className="text-[11px] bg-transparent border-b border-white/10 text-white/70 focus:outline-none focus:border-indigo-500/50 pb-0.5 cursor-pointer w-[120px]"
                             >
-                              {GMP_TYPES.map(t => <option key={t} value={t} className="bg-[#141414]">{t}</option>)}
+                              {!SOLD_TYPES.includes(app.gmpType) && app.gmpType && (
+                                <option value={app.gmpType} className="bg-[#141414] hidden">{app.gmpType}</option>
+                              )}
+                              {SOLD_TYPES.map(t => <option key={t} value={t} className="bg-[#141414]">{t}</option>)}
                             </select>
                           ) : (
                             <span className="text-[12px] text-white/15">—</span>
@@ -300,7 +303,7 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                  </div>
               </div>
               <div className="text-[10px] text-white/30 uppercase tracking-wider font-medium max-w-sm text-right">
-                GMP Profit for 'Just Allotted' is realized only when status is 'Allotted'.
+                Profit for 'Subject 1' and 'Subject 2' is realized only when status is 'Allotted'. 'Premium' is realized regardless.
               </div>
             </div>
 

@@ -36,8 +36,8 @@ const ipoApplicationSchema = new mongoose.Schema({
   },
   gmpType: {
     type: String,
-    enum: ["Allotted/Not Allotted", "Just Allotted"],
-    default: "Allotted/Not Allotted",
+    enum: ["Allotted/Not Allotted", "Just Allotted", "Subject 1", "Subject 2", "Premium"],
+    default: "Premium",
   },
   gmpPrice: {
     type: Number,
