@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, TrendingUp, Calendar, Search } from "lucide-react";
+import { Plus, Trash2, TrendingUp, Calendar, Search, Edit2 } from "lucide-react";
 import { useIPO } from "../context/IPOContext";
 import Modal, {
   ModalField,
@@ -51,7 +51,7 @@ const Tab = ({ active, onClick, children, badge }) => (
 );
 
 const IPOPage = () => {
-  const { ipos, applications, sharedIPOs, loading, createIPO, deleteIPO } = useIPO();
+  const { ipos, applications, sharedIPOs, loading, createIPO, updateIPO, deleteIPO } = useIPO();
   const { theme } = useTheme();
 
   const [showModal,    setShowModal]    = useState(false);
@@ -61,6 +61,7 @@ const IPOPage = () => {
   const [showSharedDetailsModal, setShowSharedDetailsModal] = useState(false);
   const [activeIPO,     setActiveIPO]      = useState(null);
   const [activeShareId, setActiveShareId]  = useState(null);
+  const [editingIpoId, setEditingIpoId]    = useState(null);
   const [formError,    setFormError]    = useState("");
   const [submitting,   setSubmitting]   = useState(false);
   const [searchQuery,  setSearchQuery]  = useState("");
@@ -74,6 +75,7 @@ const IPOPage = () => {
   const [lot,         setLot]         = useState("");
 
   const resetForm = () => {
+    setEditingIpoId(null);
     setCompanyname(""); setOpendate(""); setClosedate("");
     setPricebandMin(""); setPricebandMax(""); setLot("");
     setFormError("");
@@ -81,19 +83,37 @@ const IPOPage = () => {
 
   const handleClose = () => { setShowModal(false); resetForm(); };
 
-  const handleCreate = async (e) => {
+  const handleEdit = (ipo) => {
+    setEditingIpoId(ipo._id);
+    setCompanyname(ipo.companyname);
+    setOpendate(new Date(ipo.opendate).toISOString().split('T')[0]);
+    setClosedate(new Date(ipo.closedate).toISOString().split('T')[0]);
+    setPricebandMin(ipo.priceband?.min || "");
+    setPricebandMax(ipo.priceband?.max || "");
+    setLot(ipo.lot || "");
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
     setSubmitting(true);
 
-    const result = await createIPO({
+    const payload = {
       companyname,
       opendate,
       closedate,
       priceband: { min: Number(pricebandMin), max: Number(pricebandMax) },
       lot: Number(lot),
       minimum_retail_price: Number(lot) * Number(pricebandMax),
-    });
+    };
+
+    let result;
+    if (editingIpoId) {
+      result = await updateIPO(editingIpoId, payload);
+    } else {
+      result = await createIPO(payload);
+    }
 
     setSubmitting(false);
 
@@ -208,6 +228,7 @@ const IPOPage = () => {
                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={(e) => { e.stopPropagation(); setActiveIPO(ipo); setShowApplyModal(true); }} className="text-[11px] font-medium px-3 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">Apply</button>
                                 <button onClick={(e) => { e.stopPropagation(); setActiveIPO(ipo); setShowShareModal(true); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors" title="Share"><Share2 size={14} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleEdit(ipo); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-blue-500 transition-colors" title="Edit"><Edit2 size={14} /></button>
                                 <button onClick={(e) => { e.stopPropagation(); if(confirm("Delete IPO?")) deleteIPO(ipo._id); }} className="p-1.5 text-[var(--color-text-faint)] hover:text-rose-500 transition-colors" title="Delete"><Trash2 size={14} /></button>
                              </div>
                           </td>
@@ -254,6 +275,7 @@ const IPOPage = () => {
                       <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border)] mt-1">
                          <button onClick={(e) => { e.stopPropagation(); setActiveIPO(ipo); setShowApplyModal(true); }} className="text-xs font-semibold px-4 py-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all shadow-sm">Apply Now</button>
                          <button onClick={(e) => { e.stopPropagation(); setActiveIPO(ipo); setShowShareModal(true); }} className="text-[var(--color-text-faint)] hover:text-indigo-500 transition-colors flex items-center gap-1 text-xs font-semibold ml-2" title="Share"><Share2 size={16} /></button>
+                         <button onClick={(e) => { e.stopPropagation(); handleEdit(ipo); }} className="text-[var(--color-text-faint)] hover:text-blue-500 transition-colors flex items-center gap-1 text-xs font-semibold ml-2"><Edit2 size={16} /></button>
                          <button onClick={(e) => { e.stopPropagation(); if(confirm("Delete IPO?")) deleteIPO(ipo._id); }} className="text-[var(--color-text-faint)] hover:text-rose-500 transition-colors flex items-center gap-1 text-xs font-semibold ml-2"><Trash2 size={16} /></button>
                       </div>
                    </div>
@@ -314,8 +336,8 @@ const IPOPage = () => {
        )}
 
       {/* ── MODALS ── */}
-      <Modal open={showModal} onClose={handleClose} title="Add IPO Listing" maxWidth="max-w-md">
-        <form onSubmit={handleCreate} className="flex flex-col gap-4 p-1">
+      <Modal open={showModal} onClose={handleClose} title={editingIpoId ? "Edit IPO Listing" : "Add IPO Listing"} maxWidth="max-w-md">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-1">
           {formError && <p className="text-xs text-rose-500">{formError}</p>}
           <ModalField label="Company Name">
             <input type="text" value={companyname} onChange={(e) => setCompanyname(e.target.value)}
@@ -342,7 +364,7 @@ const IPOPage = () => {
           </ModalField>
           <ModalFooter>
              <CancelBtn onClick={handleClose} />
-             <ConfirmBtn type="submit" loading={submitting}>Add IPO</ConfirmBtn>
+             <ConfirmBtn type="submit" loading={submitting}>{editingIpoId ? "Save Changes" : "Add IPO"}</ConfirmBtn>
           </ModalFooter>
         </form>
       </Modal>

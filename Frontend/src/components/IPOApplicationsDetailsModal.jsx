@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIPO } from "../context/IPOContext";
-import { X, Search, RotateCcw } from "lucide-react";
+import { X, Search, RotateCcw, Download } from "lucide-react";
 
-const STATUS_OPTS = ["Pending", "Applied", "Not Applied", "Allotted", "Blocked", "Refunded"];
+const STATUS_OPTS = ["Pending", "Applied", "Not Applied", "Not Allotted", "Allotted", "Blocked", "Refunded"];
 const GMP_TYPES = ["Allotted/Not Allotted", "Just Allotted"];
 
 const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
@@ -38,6 +38,32 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
 
   const totalBlocked = searchedApps.reduce((sum, a) => sum + a.amount, 0);
   const totalProfit = searchedApps.reduce((sum, a) => sum + (a.profit || 0), 0);
+  const totalMyProfit = searchedApps.reduce((sum, a) => sum + (a.myProfit || 0), 0);
+  const totalHolderProfit = searchedApps.reduce((sum, a) => sum + (a.holderProfit || 0), 0);
+  const totalFunderProfit = searchedApps.reduce((sum, a) => sum + (a.funderProfit || 0), 0);
+
+  const handleDownloadAllotted = () => {
+    const allottedApps = searchedApps.filter(app => app.status === "Allotted");
+    if (allottedApps.length === 0) {
+      alert("No allotted applications found to download.");
+      return;
+    }
+
+    let csvContent = "Index,Full Name,PAN Number\n";
+    allottedApps.forEach((app, index) => {
+      csvContent += `${index + 1},"${app.pan?.nameOnPan || ""}","${app.pan?.panNumber || ""}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Allotted_PANs_${ipo?.companyname || "IPO"}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return createPortal(
     <AnimatePresence>
@@ -57,7 +83,7 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
             transition={{ duration: 0.14 }}
             onClick={e => e.stopPropagation()}
-            className="bg-[#0f0f1a] border border-white/[0.08] rounded-2xl w-full max-w-6xl overflow-hidden text-white flex flex-col max-h-[90vh] shadow-2xl"
+            className="bg-[#0f0f1a] border border-white/[0.08] rounded-2xl w-full max-w-[1400px] overflow-hidden text-white flex flex-col max-h-[90vh] shadow-2xl"
           >
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.06] shrink-0">
@@ -69,6 +95,13 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
               </div>
               
               <div className="flex items-center gap-4">
+                <button
+                  onClick={handleDownloadAllotted}
+                  className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg hover:bg-indigo-500 hover:text-white transition-colors"
+                  title="Download Allotted PANs as CSV"
+                >
+                  <Download size={13} /> Allotted
+                </button>
                 <div className="relative">
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
                   <input 
@@ -87,7 +120,7 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
 
             {/* Table */}
             <div className="flex-1 overflow-auto">
-              <table className="w-full border-collapse min-w-[1000px]">
+              <table className="w-full border-collapse min-w-[1200px]">
                 <thead className="sticky top-0 z-10 bg-[#0f0f1a]">
                   <tr className="border-b border-white/[0.06]">
                     <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30 w-10">#</th>
@@ -98,8 +131,9 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Sold</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP Type</th>
                     <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/30">GMP ₹</th>
+                    <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-white/30" title="My % / Holder % / Funder %">Shares % (M/H/F)</th>
                     <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30">Profit</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30 w-24">Action</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-white/30 whitespace-nowrap">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.03]">
@@ -133,7 +167,8 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                             className={`text-[11px] font-bold uppercase tracking-wider bg-white/[0.04] border border-white/10 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500/50 cursor-pointer
                                         ${app.status === 'Allotted' ? 'text-emerald-400' : 
                                           app.status === 'Pending' ? 'text-amber-400' : 
-                                          app.status === 'Not Applied' ? 'text-rose-400' : 'text-blue-400'}`}
+                                          app.status === 'Not Applied' ? 'text-rose-400' :
+                                          app.status === 'Not Allotted' ? 'text-orange-400' : 'text-blue-400'}`}
                           >
                             {STATUS_OPTS.map(opt => <option key={opt} value={opt} className="bg-[#141414] text-white">{opt}</option>)}
                           </select>
@@ -180,11 +215,44 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                           )}
                         </td>
 
+                        <td className="px-3 py-3">
+                          <div className="flex items-center justify-center gap-1 text-[11px] text-white/50 font-mono">
+                            <input 
+                              type="number"
+                              defaultValue={app.mySharePct ?? 25}
+                              onBlur={(e) => handleUpdate(app._id, { mySharePct: Number(e.target.value) })}
+                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              title="My Share %"
+                            />/
+                            <input 
+                              type="number"
+                              defaultValue={app.holderSharePct ?? 25}
+                              onBlur={(e) => handleUpdate(app._id, { holderSharePct: Number(e.target.value) })}
+                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              title="Holder Share %"
+                            />/
+                            <input 
+                              type="number"
+                              defaultValue={app.funderSharePct ?? 50}
+                              onBlur={(e) => handleUpdate(app._id, { funderSharePct: Number(e.target.value) })}
+                              className="w-8 bg-transparent border-b border-white/20 text-center focus:outline-none focus:border-indigo-500 hover:border-white/50"
+                              title="Funder Share %"
+                            />
+                          </div>
+                        </td>
+
                         <td className="px-3 py-3 text-right">
-                           <div className="flex flex-col items-end">
+                           <div className="flex flex-col items-end gap-0.5">
                               <span className={`text-[13px] font-bold tracking-tight ${app.profit > 0 ? 'text-emerald-400' : app.profit < 0 ? 'text-rose-400' : 'text-white/30'}`}>
                                  ₹{(app.profit || 0).toLocaleString("en-IN")}
                               </span>
+                              {(app.profit > 0 || app.profit < 0) && (
+                                <div className="flex gap-1.5 text-[9px] font-medium text-white/40">
+                                  <span title="My Profit">M: ₹{Math.round(app.myProfit || 0).toLocaleString("en-IN")}</span>
+                                  <span title="Holder Profit">H: ₹{Math.round(app.holderProfit || 0).toLocaleString("en-IN")}</span>
+                                  <span title="Funder Profit">F: ₹{Math.round(app.funderProfit || 0).toLocaleString("en-IN")}</span>
+                                </div>
+                              )}
                            </div>
                         </td>
 
@@ -192,7 +260,7 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                           <button
                             type="button"
                             onClick={() => handleCancel(app._id)}
-                            className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all ml-auto"
+                            className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-all ml-auto whitespace-nowrap"
                             title="Reverse Application"
                           >
                             <RotateCcw size={11} /> Reverse
@@ -212,12 +280,24 @@ const IPOApplicationsDetailsModal = ({ open, onClose, ipo }) => {
                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Capital Blocked</p>
                    <p className="text-[14px] text-white font-bold tracking-tight">₹{totalBlocked.toLocaleString("en-IN")}</p>
                 </div>
-                <div className="flex flex-col">
-                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Total Profit</p>
-                   <p className={`text-[14px] font-bold tracking-tight ${totalProfit > 0 ? 'text-emerald-400' : totalProfit < 0 ? 'text-rose-400' : 'text-white'}`}>
+                 <div className="flex flex-col items-end gap-0.5 border-r border-white/10 pr-6 mr-2">
+                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Total My Profit</p>
+                   <p className={`text-[15px] font-black tracking-tight ${totalMyProfit > 0 ? 'text-indigo-400' : totalMyProfit < 0 ? 'text-rose-400' : 'text-white'}`}>
+                     ₹{Math.round(totalMyProfit).toLocaleString("en-IN")}
+                   </p>
+                 </div>
+                 <div className="flex flex-col items-end gap-0.5">
+                   <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Total Overall Profit</p>
+                   <p className={`text-[15px] font-black tracking-tight ${totalProfit > 0 ? 'text-emerald-400' : totalProfit < 0 ? 'text-rose-400' : 'text-white'}`}>
                      ₹{totalProfit.toLocaleString("en-IN")}
                    </p>
-                </div>
+                   {totalProfit !== 0 && (
+                     <div className="flex gap-2 text-[9px] font-medium text-white/40 mt-1">
+                       <span>H: ₹{Math.round(totalHolderProfit).toLocaleString("en-IN")}</span>
+                       <span>F: ₹{Math.round(totalFunderProfit).toLocaleString("en-IN")}</span>
+                     </div>
+                   )}
+                 </div>
               </div>
               <div className="text-[10px] text-white/30 uppercase tracking-wider font-medium max-w-sm text-right">
                 GMP Profit for 'Just Allotted' is realized only when status is 'Allotted'.

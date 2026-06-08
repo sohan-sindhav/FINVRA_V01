@@ -66,9 +66,17 @@ export const getIPOById = async (req, res) => {
 
 export const updateIPO = async (req, res) => {
   try {
+    const { lot, priceband } = req.body;
+    const updateData = { ...req.body };
+    
+    // If lot or priceband is updated, recalculate minimum_retail_price
+    if (lot !== undefined && priceband && priceband.max !== undefined) {
+      updateData.minimum_retail_price = lot * priceband.max;
+    }
+
     const ipo = await IPOManager.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
-      req.body,
+      updateData,
       { new: true }
     );
     if (!ipo) return res.status(404).json({ message: "IPO not found" });

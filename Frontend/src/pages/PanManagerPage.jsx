@@ -213,11 +213,11 @@ const PanManagerPage = () => {
   const [isAddOpen, setIsAddOpen]   = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData]     = useState({ panNumber: "", nameOnPan: "" });
+  const [formData, setFormData]     = useState({ panNumber: "", nameOnPan: "", isMyAccount: false });
   const [error, setError]           = useState(null);
   // Broker / device inline edit state
   const [editingPanId, setEditingPanId] = useState(null);
-  const [editFields, setEditFields]     = useState({ nameOnPan: "", broker: "", loggedInDevice: "" });
+  const [editFields, setEditFields]     = useState({ nameOnPan: "", broker: "", loggedInDevice: "", isMyAccount: false });
   const [editSaving, setEditSaving]     = useState(false);
   const [editError, setEditError]       = useState("");
 
@@ -233,7 +233,7 @@ const PanManagerPage = () => {
     setIsSubmitting(true);
     try {
       const result = await addPanCard(formData);
-      if (result.success) { setIsAddOpen(false); setFormData({ panNumber: "", nameOnPan: "" }); }
+      if (result.success) { setIsAddOpen(false); setFormData({ panNumber: "", nameOnPan: "", isMyAccount: false }); }
       else setError(result.message);
     } finally {
       setIsSubmitting(false);
@@ -243,7 +243,7 @@ const PanManagerPage = () => {
   // ── Inline broker/device edit ─────────────────────────────────────────────
   const openEdit = (pan) => {
     setEditingPanId(pan._id);
-    setEditFields({ nameOnPan: pan.nameOnPan || "", broker: pan.broker || "", loggedInDevice: pan.loggedInDevice || "" });
+    setEditFields({ nameOnPan: pan.nameOnPan || "", broker: pan.broker || "", loggedInDevice: pan.loggedInDevice || "", isMyAccount: pan.isMyAccount || false });
     setEditError("");
   };
   const closeEdit = () => { setEditingPanId(null); setEditError(""); };
@@ -278,9 +278,12 @@ const PanManagerPage = () => {
       <tr className="hover:bg-white/[0.02] transition-colors group">
         <td className="px-6 py-4 text-[13px] font-medium text-white/30 tabular-nums">{i + 1}</td>
         <td className="px-6 py-4">
-          <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">
-            {pan.panNumber}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">
+              {pan.panNumber}
+            </span>
+            {pan.isMyAccount && <Badge color="indigo">Mine</Badge>}
+          </div>
         </td>
         <td className="px-6 py-4 text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</td>
         <td className="px-6 py-4">
@@ -363,8 +366,19 @@ const PanManagerPage = () => {
                   className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 w-[180px] focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
                 />
               </div>
-              {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
-              <div className="flex items-center gap-2 mb-0.5">
+              <div className="flex flex-col gap-1 mt-4">
+                <label className="flex items-center gap-2 text-[12px] font-bold text-white/50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editFields.isMyAccount}
+                    onChange={e => setEditFields(f => ({ ...f, isMyAccount: e.target.checked }))}
+                    className="rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/50"
+                  />
+                  Is this your personal account?
+                </label>
+              </div>
+              {editError && <p className="text-[11px] text-rose-400 mt-2">{editError}</p>}
+              <div className="flex items-center gap-2 mb-0.5 mt-2">
                 <button
                   onClick={() => saveEdit(pan._id)}
                   disabled={editSaving}
@@ -390,7 +404,10 @@ const PanManagerPage = () => {
     <div key={pan._id} className="bg-[#111827]/50 backdrop-blur-xl border border-white/[0.04] rounded-[16px] p-5 flex flex-col gap-4 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)]">
       <div className="flex justify-between items-start gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">{pan.panNumber}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[14px] font-semibold tracking-widest font-mono text-white/90">{pan.panNumber}</span>
+            {pan.isMyAccount && <Badge color="indigo">Mine</Badge>}
+          </div>
           <span className="text-[13px] font-medium text-white/50 italic">{pan.nameOnPan}</span>
           {(pan.broker || pan.loggedInDevice) && (
             <div className="flex flex-col gap-1 mt-1">
@@ -440,6 +457,17 @@ const PanManagerPage = () => {
               placeholder="e.g. iPhone 15"
               className="text-[13px] bg-white/[0.04] border border-white/10 text-white/80 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500/50 placeholder:text-white/15"
             />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2 text-[12px] font-bold text-white/50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editFields.isMyAccount}
+                onChange={e => setEditFields(f => ({ ...f, isMyAccount: e.target.checked }))}
+                className="rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/50"
+              />
+              Is this your personal account?
+            </label>
           </div>
           {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
           <div className="flex gap-2">
@@ -652,6 +680,20 @@ const PanManagerPage = () => {
               required
               maxLength={10}
             />
+          </div>
+          <div className="flex flex-col gap-1.5 mt-2">
+            <label className="flex items-center gap-2 text-[12px] font-medium text-[var(--color-text-base)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isMyAccount}
+                onChange={(e) => setFormData({ ...formData, isMyAccount: e.target.checked })}
+                className="rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/50 w-4 h-4"
+              />
+              This is my personal PAN account
+            </label>
+            <p className="text-[10px] text-[var(--color-text-faint)] ml-6">
+              Sets default IPO profit sharing to 50% for you and 50% for funder.
+            </p>
           </div>
           <ModalFooter>
             <CancelBtn onClick={() => { setIsAddOpen(false); setError(null); }} disabled={isSubmitting} />

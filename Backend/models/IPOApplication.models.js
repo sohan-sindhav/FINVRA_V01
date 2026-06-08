@@ -27,7 +27,7 @@ const ipoApplicationSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Pending", "Applied", "Not Applied", "Allotted", "Blocked", "Refunded"],
+    enum: ["Pending", "Applied", "Not Applied", "Not Allotted", "Allotted", "Blocked", "Refunded"],
     default: "Pending",
   },
   isGMPSold: {
@@ -44,6 +44,30 @@ const ipoApplicationSchema = new mongoose.Schema({
     default: 0,
   },
   profit: {
+    type: Number,
+    default: 0,
+  },
+  mySharePct: {
+    type: Number,
+    default: 25,
+  },
+  holderSharePct: {
+    type: Number,
+    default: 25,
+  },
+  funderSharePct: {
+    type: Number,
+    default: 50,
+  },
+  myProfit: {
+    type: Number,
+    default: 0,
+  },
+  holderProfit: {
+    type: Number,
+    default: 0,
+  },
+  funderProfit: {
     type: Number,
     default: 0,
   },

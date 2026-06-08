@@ -46,7 +46,14 @@ export const applyIPO = async (req, res) => {
       const panUpdate = { lastUsedBankAcc: bankAccId };
       if (fundingMethod) panUpdate.lastFundingMethod = fundingMethod;
       if (loggedInDevice) panUpdate.loggedInDevice = loggedInDevice;
-      await PanCard.findByIdAndUpdate(panId, panUpdate, { session });
+      const updatedPan = await PanCard.findByIdAndUpdate(panId, panUpdate, { session, new: true });
+
+      let mySharePct = 25, holderSharePct = 25, funderSharePct = 50;
+      if (updatedPan && updatedPan.isMyAccount) {
+        mySharePct = 50;
+        holderSharePct = 0;
+        funderSharePct = 50;
+      }
 
       // 5. Create Application record
       const newApp = new IPOApplication({
@@ -57,6 +64,9 @@ export const applyIPO = async (req, res) => {
         amount: amountPerApplication,
         status: "Pending",
         fundingMethod,
+        mySharePct,
+        holderSharePct,
+        funderSharePct,
       });
       await newApp.save({ session });
       
@@ -119,29 +129,60 @@ export const cancelApplication = async (req, res) => {
 };
 export const updateApplicationStatus = async (req, res) => {
   const { appId } = req.params;
-  const { status, isGMPSold, gmpType, gmpPrice } = req.body;
+  const { status, isGMPSold, gmpType, gmpPrice, mySharePct, holderSharePct, funderSharePct } = req.body;
   const userId = req.user._id;
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const app = await IPOApplication.findOne({ _id: appId, user: userId });
+    const app = await IPOApplication.findOne({ _id: appId, user: userId }).session(session);
     if (!app) throw new Error("Application not found");
 
+    const ipo = await IPOManager.findById(app.ipo).session(session);
+    const lotSize = ipo ? ipo.lot : 1;
+
     // Update fields if provided
-    if (status !== undefined) app.status = status;
     if (isGMPSold !== undefined) app.isGMPSold = isGMPSold;
     if (gmpType !== undefined) app.gmpType = gmpType;
     if (gmpPrice !== undefined) app.gmpPrice = gmpPrice;
+    if (mySharePct !== undefined) app.mySharePct = mySharePct;
+    if (holderSharePct !== undefined) app.holderSharePct = holderSharePct;
+    if (funderSharePct !== undefined) app.funderSharePct = funderSharePct;
+
+    // Handle bank unblocking/blocking on Refunded status transition
+    if (status !== undefined && app.status !== status) {
+      if (status === "Refunded" && app.status !== "Refunded") {
+        // Going to Refunded -> Unblock funds
+        const bank = await BankAcc.findById(app.bankAcc).session(session);
+        if (bank) {
+          bank.balance += app.amount;
+          bank.blockedBalance -= app.amount;
+          await bank.save({ session });
+        }
+      } else if (app.status === "Refunded" && status !== "Refunded") {
+        // Leaving Refunded -> Re-block funds
+        const bank = await BankAcc.findById(app.bankAcc).session(session);
+        if (bank) {
+          // ensure not going negative theoretically, but we just re-block
+          bank.balance -= app.amount;
+          bank.blockedBalance += app.amount;
+          await bank.save({ session });
+        }
+      }
+      app.status = status;
+    }
 
     // PROFIT CALCULATION LOGIC
     let calculatedProfit = 0;
     if (app.isGMPSold) {
       if (app.gmpType === "Allotted/Not Allotted") {
-        // Method 1: Profit is the GMP price regardless of allotment
-        calculatedProfit = app.gmpPrice || 0;
+        // Method 1: Profit is the GMP price per share * lot size regardless of allotment
+        calculatedProfit = (app.gmpPrice || 0) * lotSize;
       } else if (app.gmpType === "Just Allotted") {
         // Method 2: Profit only counts if status is Allotted
         if (app.status === "Allotted") {
-          calculatedProfit = app.gmpPrice || 0;
+          calculatedProfit = (app.gmpPrice || 0) * lotSize;
         } else {
           calculatedProfit = 0;
         }
@@ -151,10 +192,18 @@ export const updateApplicationStatus = async (req, res) => {
     }
 
     app.profit = calculatedProfit;
-    await app.save();
+    app.myProfit = (calculatedProfit * (app.mySharePct / 100)) || 0;
+    app.holderProfit = (calculatedProfit * (app.holderSharePct / 100)) || 0;
+    app.funderProfit = (calculatedProfit * (app.funderSharePct / 100)) || 0;
+
+    await app.save({ session });
+    await session.commitTransaction();
 
     res.status(200).json({ success: true, application: app });
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({ success: false, message: error.message });
+  } finally {
+    session.endSession();
   }
 };

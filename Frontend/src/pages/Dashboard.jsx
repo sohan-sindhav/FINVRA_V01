@@ -44,6 +44,7 @@ const Dashboard = () => {
   const enabledModules = user?.enabledModules || [];
 
   const [activeApp, setActiveApp] = useState(null);
+  const [showProfitsModal, setShowProfitsModal] = useState(false);
 
   const handleDeleteApp = async () => {
     if (activeApp && window.confirm("Delete this placement?")) {
@@ -80,9 +81,48 @@ const Dashboard = () => {
   const totalLiabilities = moneyDiaryYouOwe;
   const totalNetWealth = totalAssets - totalLiabilities;
 
-  const totalIPOProfit = useMemo(() => 
+  const totalOverallProfit = useMemo(() => 
     isIPOEnabled ? applications.reduce((sum, app) => sum + (app.profit || 0), 0) : 0, 
   [applications, isIPOEnabled]);
+
+  const totalMyProfit = useMemo(() => 
+    isIPOEnabled ? applications.reduce((sum, app) => sum + (app.myProfit || 0), 0) : 0, 
+  [applications, isIPOEnabled]);
+
+  const totalHolderProfit = useMemo(() => 
+    isIPOEnabled ? applications.reduce((sum, app) => sum + (app.holderProfit || 0), 0) : 0, 
+  [applications, isIPOEnabled]);
+
+  const totalFunderProfit = useMemo(() => 
+    isIPOEnabled ? applications.reduce((sum, app) => sum + (app.funderProfit || 0), 0) : 0, 
+  [applications, isIPOEnabled]);
+
+  const detailedProfitList = useMemo(() => {
+    if (!isIPOEnabled) return [];
+    let myTotal = 0;
+    let funderTotal = 0;
+    const holderMap = {};
+
+    applications.forEach(app => {
+      myTotal += (app.myProfit || 0);
+      funderTotal += (app.funderProfit || 0);
+      
+      const holderName = app.pan?.nameOnPan || "Unknown Holder";
+      holderMap[holderName] = (holderMap[holderName] || 0) + (app.holderProfit || 0);
+    });
+
+    const list = [];
+    if (myTotal > 0) list.push({ name: "My Profit (Me)", profit: myTotal, type: "Me" });
+    if (funderTotal > 0) list.push({ name: "Funder (Total)", profit: funderTotal, type: "Funder" });
+
+    Object.entries(holderMap).forEach(([name, profit]) => {
+      if (profit > 0) {
+        list.push({ name: `${name}`, profit, type: "Holder" });
+      }
+    });
+
+    return list.sort((a, b) => b.profit - a.profit);
+  }, [applications, isIPOEnabled]);
 
   const activeTransactions = useMemo(
     () => isTransEnabled ? transactions.filter((t) => !t.reversed) : [],
@@ -95,14 +135,39 @@ const Dashboard = () => {
     const map = {};
     applications.forEach(app => {
       const name = app.ipo?.companyname || "Unknown";
-      map[name] = (map[name] || 0) + (app.profit || 0);
+      if (!map[name]) {
+         map[name] = { myProfit: 0, totalProfit: 0, holderProfit: 0, funderProfit: 0 };
+      }
+      map[name].myProfit += (app.myProfit || 0);
+      map[name].totalProfit += (app.profit || 0);
+      map[name].holderProfit += (app.holderProfit || 0);
+      map[name].funderProfit += (app.funderProfit || 0);
     });
     return Object.entries(map)
-      .map(([name, profit]) => ({ name, profit }))
-      .filter(d => Math.abs(d.profit) > 0)
-      .sort((a, b) => b.profit - a.profit)
+      .map(([name, data]) => ({ name, ...data }))
+      .filter(d => Math.abs(d.totalProfit) > 0)
+      .sort((a, b) => b.myProfit - a.myProfit)
       .slice(0, 8);
   }, [applications, isIPOEnabled]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-[#111827]/90 backdrop-blur-xl border border-white/10 p-3.5 rounded-xl shadow-2xl min-w-[180px]">
+          <p className="text-[12px] text-white/50 font-bold uppercase tracking-wider mb-2.5">{label}</p>
+          <div className="flex flex-col gap-1.5 text-[13px] font-medium">
+            <p className="flex justify-between gap-4"><span className="text-white/60">My Profit:</span><span className="text-indigo-400 font-bold tabular-nums">₹{Math.round(data.myProfit).toLocaleString("en-IN")}</span></p>
+            <p className="flex justify-between gap-4"><span className="text-white/60">Holder:</span><span className="text-white/80 tabular-nums">₹{Math.round(data.holderProfit).toLocaleString("en-IN")}</span></p>
+            <p className="flex justify-between gap-4"><span className="text-white/60">Funder:</span><span className="text-white/80 tabular-nums">₹{Math.round(data.funderProfit).toLocaleString("en-IN")}</span></p>
+            <div className="h-px bg-white/10 my-1"></div>
+            <p className="flex justify-between gap-4"><span className="text-white/80 font-bold uppercase text-[10px] tracking-wider mt-0.5">Total</span><span className="text-emerald-400 font-black tabular-nums">₹{Math.round(data.totalProfit).toLocaleString("en-IN")}</span></p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-full bg-[var(--color-bg-page)] p-4 md:p-8 text-[var(--color-text-base)] font-exo transition-colors duration-300">
@@ -237,8 +302,8 @@ const Dashboard = () => {
                   <TrendingUp size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl font-bold text-white tracking-tight truncate">₹{totalIPOProfit.toLocaleString("en-IN")}</p>
-                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest truncate">Net Profit</p>
+                  <p className="text-xl font-bold text-white tracking-tight truncate">₹{Math.round(totalMyProfit).toLocaleString("en-IN")}</p>
+                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest truncate">My Profit</p>
                 </div>
               </div>
             </>
@@ -279,16 +344,10 @@ const Dashboard = () => {
                            dy={10}
                         />
                         <YAxis hide={true} />
-                        <ReTooltip 
-                           cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }}
-                           contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)' }}
-                           itemStyle={{ color: '#fff', fontSize: '15px', fontWeight: '600' }}
-                           labelStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                           formatter={(value) => [`₹${value.toLocaleString("en-IN")}`, 'Profit']}
-                        />
+                        <ReTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                         <Area 
                            type="monotone"
-                           dataKey="profit" 
+                           dataKey="myProfit" 
                            stroke="#6366F1" 
                            strokeWidth={3}
                            fill="url(#colorProfit)" 
@@ -302,6 +361,27 @@ const Dashboard = () => {
                     No profit data available yet.
                   </div>
                 )}
+             </div>
+
+             <div className="mt-6 pt-6 border-t border-white/[0.04] relative z-10">
+               <div className="flex flex-wrap items-center justify-between gap-4">
+                 <div className="flex items-center gap-6 md:gap-8">
+                   <div className="flex flex-col">
+                     <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1">My Profit</span>
+                     <span className="text-[18px] font-black text-indigo-400 tracking-tight tabular-nums">₹{Math.round(totalMyProfit).toLocaleString("en-IN")}</span>
+                   </div>
+                   <div className="flex flex-col">
+                     <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1">Total Profit</span>
+                     <span className="text-[18px] font-black text-emerald-400 tracking-tight tabular-nums">₹{Math.round(totalOverallProfit).toLocaleString("en-IN")}</span>
+                   </div>
+                 </div>
+                 <button 
+                   onClick={() => setShowProfitsModal(true)}
+                   className="text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/[0.04] transition-colors"
+                 >
+                   Show More Breakdown
+                 </button>
+               </div>
              </div>
           </div>
         )}
@@ -468,6 +548,35 @@ const Dashboard = () => {
             </ModalFooter>
           </div>
         )}
+      </Modal>
+
+      {/* DETAILED PROFITS MODAL */}
+      <Modal open={showProfitsModal} onClose={() => setShowProfitsModal(false)} title="Profit Distribution Breakdown" maxWidth="max-w-md">
+        <div className="flex flex-col gap-2 text-[var(--color-text-base)] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar p-1">
+          {detailedProfitList.length === 0 ? (
+            <p className="text-center text-[13px] text-white/40 py-8">No profit data available.</p>
+          ) : (
+            detailedProfitList.map((item, i) => (
+              <div key={i} className="flex justify-between items-center bg-white/[0.02] hover:bg-white/[0.04] transition-colors p-3.5 rounded-xl border border-white/[0.05]">
+                 <div className="flex items-center gap-3">
+                    <span className="text-[12px] font-bold text-white/30 w-4 text-right tabular-nums">{i + 1}.</span>
+                    <div className="flex flex-col">
+                       <span className="text-[14px] font-semibold text-white/90">
+                          {item.name}
+                       </span>
+                       <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold mt-0.5">{item.type}</span>
+                    </div>
+                 </div>
+                 <span className={`text-[15px] font-bold tabular-nums ${item.type === 'Me' ? 'text-indigo-400' : item.type === 'Funder' ? 'text-emerald-400' : 'text-white'}`}>
+                    ₹{Math.round(item.profit).toLocaleString("en-IN")}
+                 </span>
+              </div>
+            ))
+          )}
+        </div>
+        <ModalFooter>
+          <CancelBtn onClick={() => setShowProfitsModal(false)}>Close</CancelBtn>
+        </ModalFooter>
       </Modal>
 
     </div>

@@ -1,7 +1,7 @@
 import PanCard from "../models/panCard.models.js";
 
 export const addPanCard = async (req, res) => {
-  const { panNumber, nameOnPan } = req.body;
+  const { panNumber, nameOnPan, isMyAccount } = req.body;
   const userId = req.user._id;
 
   try {
@@ -14,6 +14,7 @@ export const addPanCard = async (req, res) => {
       user: userId,
       panNumber: panNumber.toUpperCase(),
       nameOnPan,
+      isMyAccount: isMyAccount || false,
     });
 
     await newPan.save();
@@ -53,7 +54,7 @@ export const updatePanCard = async (req, res) => {
   const { id } = req.params;
   const userId = req.user._id;
   // Only allow editing these metadata fields — PAN number and name are immutable here
-  const { broker, loggedInDevice, lastFundingMethod, nameOnPan } = req.body;
+  const { broker, loggedInDevice, lastFundingMethod, nameOnPan, isMyAccount } = req.body;
 
   try {
     const updates = {};
@@ -61,6 +62,7 @@ export const updatePanCard = async (req, res) => {
     if (loggedInDevice    !== undefined) updates.loggedInDevice    = loggedInDevice;
     if (lastFundingMethod !== undefined) updates.lastFundingMethod = lastFundingMethod;
     if (nameOnPan         !== undefined) updates.nameOnPan         = nameOnPan;
+    if (isMyAccount       !== undefined) updates.isMyAccount       = isMyAccount;
 
     const panCard = await PanCard.findOneAndUpdate(
       { _id: id, user: userId },

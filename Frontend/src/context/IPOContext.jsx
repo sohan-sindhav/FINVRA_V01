@@ -35,6 +35,19 @@ export const IPOProvider = ({ children }) => {
     }
   };
 
+  const updateIPO = async (id, data) => {
+    try {
+      setLoading(true);
+      await axiosInstance.put(`/api/ipo/update/${id}`, data);
+      await getAllIPO();
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error?.message || "Failed to update IPO" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteIPO = async (id) => {
     try {
       await axiosInstance.delete(`/api/ipo/delete/${id}`);
@@ -148,7 +161,7 @@ export const IPOProvider = ({ children }) => {
   }, [loggedIn]);
 
   return (
-    <IPOContext.Provider value={{ ipos, applications, loading, incomingShareRequests, sharedIPOs, getAllIPO, createIPO, deleteIPO, applyForIPO, cancelApplication, fetchApplications, updateStatus, fetchIncomingShareRequests, respondToShareRequest, fetchSharedIPOs }}>
+    <IPOContext.Provider value={{ ipos, applications, loading, incomingShareRequests, sharedIPOs, getAllIPO, createIPO, updateIPO, deleteIPO, applyForIPO, cancelApplication, fetchApplications, updateStatus, fetchIncomingShareRequests, respondToShareRequest, fetchSharedIPOs }}>
       {children}
     </IPOContext.Provider>
   );
